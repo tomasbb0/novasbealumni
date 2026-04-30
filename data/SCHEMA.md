@@ -2,9 +2,11 @@
 
 This folder is the contract between three parties.
 
-1. The frontend `/profile` page (writes to `profiles.json` via the sibling agent's backend).
-2. The 24/7 networker agent (`.github/workflows/alumni-agent.yml`) that reads `profiles.json` and writes to `proposed-connections.json`.
-3. The static `/connections` dashboard (reads `proposed-connections.json` at build time).
+1. The in-app onboarding agent (`/onboard`) writes new alumni into `profiles.json`.
+2. The in-app 24/7 OpenClaw connection agent reads `profiles.json` and appends to `proposed-connections.json`. It also emits activity events into `agent-activity.json`.
+3. The static dashboards (`/connections`, `/alumni/[id]`, `/agent`, `/admin`) read these files at build time.
+
+Both writes happen via the sibling in-app agent. This frontend repo only reads. A push to `main` rebuilds the static site on GitHub Pages.
 
 If you change a field, update this file and the TS types in `src/lib/connections.ts` in the same commit.
 
@@ -67,3 +69,31 @@ The agent must never create a `ProposedConnection` whose `(alumni_a_id, alumni_b
 ## Privacy
 
 `email` is for the admin only. The dashboard renders `full_name`, `current_role`, `current_company`, `programme`, `graduation_year`, the synergy summary, and the intro draft. It never renders the email.
+
+## agent-activity.json
+
+Append-only feed of what the OpenClaw agent did each tick. Powers `/agent`.
+
+```ts
+type AgentActivity = {
+  id: string;                    // uuid
+  ts: string;                    // ISO8601
+  kind:
+    | "tick_start"
+    | "tick_end"
+    | "profile_added"
+    | "profile_updated"
+    | "connection_proposed"
+    | "connection_status_changed"
+    | "self_improvement"        // agent edited its own prompt or rules
+    | "error"
+    | "note";                    // free-form agent thought
+  summary: string;               // 1 line, human-readable
+  details?: string;              // optional longer body, markdown
+  related_profile_ids?: string[];
+  related_connection_id?: string;
+  model: string;                 // e.g. "claude-haiku-4.5"
+};
+```
+
+The frontend treats this file as opaque newest-first when rendered.

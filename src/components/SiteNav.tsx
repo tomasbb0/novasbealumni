@@ -13,12 +13,12 @@ export function SiteNav() {
           </span>
         </Link>
         <div className="flex items-center gap-6 text-sm text-[color:var(--foreground)]">
-          <Link href="/rsvp" className="hover:text-[color:var(--primary)] transition">RSVP</Link>
-          <Link href="/survey" className="hover:text-[color:var(--primary)] transition">Survey</Link>
+          <Link href="/onboard" className="hover:text-[color:var(--primary)] transition">Join</Link>
           <Link href="/connections" className="hover:text-[color:var(--primary)] transition">Connections</Link>
+          <Link href="/agent" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Agent</Link>
           <Link href="/pitch" className="hover:text-[color:var(--primary)] transition hidden sm:inline">For partners</Link>
           <Link
-            href="/rsvp"
+            href="/onboard"
             className="ml-2 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition"
           >
             Join the list
