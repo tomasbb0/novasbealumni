@@ -7,9 +7,10 @@ import { useAuth } from "@/lib/auth";
 import { getProfile, isProfileComplete, type Profile } from "@/lib/profile";
 import { brand } from "@/lib/brand";
 import { listMyConnections, respondToConnection, type Connection } from "@/lib/connectRequests";
+import { listUpcomingEvents, type AlumniEvent } from "@/lib/events";
 
-type EventLite = { id: string; title: string; dateLabel: string; venueLabel: string };
-const events: EventLite[] = [
+type EventLite = { id: string; title: string; dateLabel: string; venueLabel: string; rsvpUrl?: string | null };
+const fallbackEvents: EventLite[] = [
   {
     id: "first",
     title: brand.firstEvent.name,
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const [nearby, setNearby] = useState<Profile[]>([]);
   const [intros, setIntros] = useState<Profile[]>([]);
   const [incoming, setIncoming] = useState<Array<Connection & { requesterProfile?: Profile }>>([]);
+  const [events, setEvents] = useState<EventLite[]>(fallbackEvents);
 
   useEffect(() => {
     if (!ready) return;
@@ -82,6 +84,21 @@ export default function DashboardPage() {
             setIncoming(pendingIn.map((c) => ({ ...c, requesterProfile: byId.get(c.requester) })));
           }
         } catch { /* table may not yet exist */ }
+
+        try {
+          const evs = await listUpcomingEvents(5);
+          if (evs.length > 0) {
+            setEvents(
+              evs.map((e: AlumniEvent) => ({
+                id: e.id,
+                title: e.title,
+                dateLabel: e.date_label || (e.starts_at ? new Date(e.starts_at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) : ""),
+                venueLabel: [e.venue_label, e.city].filter(Boolean).join(" · "),
+                rsvpUrl: e.rsvp_url,
+              }))
+            );
+          }
+        } catch { /* events table may not yet exist */ }
       } finally {
         setLoading(false);
       }
@@ -162,7 +179,7 @@ export default function DashboardPage() {
             <Card key={e.id}
               title={e.title}
               subtitle={[e.dateLabel, e.venueLabel].filter(Boolean).join(" · ")}
-              href="/rsvp"
+              href={e.rsvpUrl || "/rsvp"}
               cta="RSVP"
             />
           ))}

@@ -95,3 +95,50 @@ create policy "addressee can update connection status"
   to authenticated
   using (auth.uid() = addressee)
   with check (auth.uid() = addressee);
+
+-- 4. admin flag on profiles -------------------------------------------------
+-- Flip your own row to is_admin=true in the Table Editor to manage events.
+alter table public.profiles
+  add column if not exists is_admin boolean not null default false;
+
+-- 5. events -----------------------------------------------------------------
+create table if not exists public.events (
+  id           uuid primary key default gen_random_uuid(),
+  title        text not null,
+  description  text,
+  starts_at    timestamptz,
+  date_label   text,
+  venue_label  text,
+  city         text,
+  rsvp_url     text,
+  is_published boolean not null default true,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+
+alter table public.events enable row level security;
+
+drop policy if exists "events readable by anyone" on public.events;
+create policy "events readable by anyone"
+  on public.events for select
+  to anon, authenticated
+  using (is_published = true);
+
+drop policy if exists "admins can insert events" on public.events;
+create policy "admins can insert events"
+  on public.events for insert
+  to authenticated
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
+
+drop policy if exists "admins can update events" on public.events;
+create policy "admins can update events"
+  on public.events for update
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
+
+drop policy if exists "admins can delete events" on public.events;
+create policy "admins can delete events"
+  on public.events for delete
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
