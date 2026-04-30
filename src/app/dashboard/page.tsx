@@ -58,12 +58,13 @@ export default function DashboardPage() {
           setNearby((data as Profile[]) || []);
         }
         if (me?.programme) {
-          const { data } = await sb
+          let q = sb
             .from("profiles")
             .select("*")
             .eq("programme", me.programme)
-            .neq("id", me.id)
-            .neq("city", me.city ?? "")
+            .neq("id", me.id);
+          if (me.city) q = q.neq("city", me.city);
+          const { data } = await q
             .order("updated_at", { ascending: false })
             .limit(3);
           setIntros((data as Profile[]) || []);
@@ -103,7 +104,7 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">My profile</Link>
+          <Link href="/onboarding" className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Edit profile</Link>
           <button onClick={signOut} className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Sign out</button>
         </div>
       </header>
@@ -122,11 +123,9 @@ export default function DashboardPage() {
 
         <Section title={`New alumni${profile?.city ? ` in ${profile.city}` : " nearby"}`} empty="No new alumni in your city yet. You might be the first.">
           {nearby.map((p) => (
-            <Card key={p.id}
+            <PersonCard key={p.id}
               title={p.full_name || "Alumnus"}
               subtitle={[p.current_role, p.current_company].filter(Boolean).join(" @ ") || p.headline || ""}
-              href={`/alumni/${p.id}`}
-              cta="View"
               avatar={p.avatar_url}
             />
           ))}
@@ -134,11 +133,9 @@ export default function DashboardPage() {
 
         <Section title="Suggested intros" empty="We will suggest intros once a few more alumni from your programme are on the platform.">
           {intros.map((p) => (
-            <Card key={p.id}
+            <PersonCard key={p.id}
               title={p.full_name || "Alumnus"}
               subtitle={[p.programme, p.city].filter(Boolean).join(" · ")}
-              href={`/alumni/${p.id}`}
-              cta="Say hi"
               avatar={p.avatar_url}
             />
           ))}
@@ -175,5 +172,24 @@ function Card({ title, subtitle, href, cta, avatar }: { title: string; subtitle?
       </div>
       <span className="text-xs font-medium text-[color:var(--primary)]">{cta} →</span>
     </Link>
+  );
+}
+
+function PersonCard({ title, subtitle, avatar }: { title: string; subtitle?: string; avatar?: string | null }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-[color:var(--border)] bg-white p-3">
+      {avatar ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
+      ) : (
+        <div className="h-10 w-10 rounded-full bg-[color:var(--primary-50)] flex items-center justify-center text-[color:var(--primary)] text-sm font-medium">
+          {title.slice(0, 1)}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-[color:var(--foreground)] truncate">{title}</div>
+        {subtitle && <div className="text-xs text-[color:var(--muted)] truncate">{subtitle}</div>}
+      </div>
+    </div>
   );
 }
