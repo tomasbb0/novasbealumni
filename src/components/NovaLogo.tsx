@@ -104,14 +104,20 @@ export function NovaLogo({
         }
         @keyframes nlSig { 0% { opacity: 0; } 100% { opacity: 1; } }
 
-        /* Phase 1 (0-0.6s): ball+dash unit falls together from above. */
-        .nova-logo-animate .nl-group {
-          animation: nlFall 0.6s cubic-bezier(.45,.05,.6,1) 0s 1 forwards;
+        /* TEST(undoable): only the ball falls; dash waits in its place, then expands. */
+        /* Original behaviour: .nl-group fell as a unit, then dash grew + ball slid.
+           To revert, restore the .nl-group rule and replace the .nl-cd-circle block
+           with the simpler nlBallSlide-only version. */
+        @keyframes nlBallFall {
+          0%   { transform: translate(var(--nl-ball-start-x), calc(var(--nl-fall) * -1)); }
+          100% { transform: translate(var(--nl-ball-start-x), 0); }
         }
-        /* Ball starts compressed (below resting), then rises to natural top-of-dash position once. */
+        /* Phase 1 (0-0.6s): only the ball drops in. Dash sits at start scale, waiting. */
         .nova-logo-animate .nl-cd-circle {
-          transform: translate(var(--nl-ball-start-x), 0);
-          animation: nlBallSlide 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
+          transform: translate(var(--nl-ball-start-x), calc(var(--nl-fall) * -1));
+          animation:
+            nlBallFall  0.6s cubic-bezier(.45,.05,.6,1) 0s 1 forwards,
+            nlBallSlide 0.9s cubic-bezier(.3,.6,.4,1)  0.6s 1 forwards;
         }
         /* Dash grows rightward, past its base width, in sync with the ball. */
         .nova-logo-animate .nl-cd-dash {

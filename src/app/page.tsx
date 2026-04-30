@@ -17,10 +17,10 @@ export default function Home() {
           aria-hidden
           className="hidden lg:block pointer-events-none select-none absolute"
           style={{
-            width: "min(110vh, 1100px)",
-            height: "min(110vh, 1100px)",
-            right: "calc(min(110vh, 1100px) / -2 + min(110vh, 1100px) * 0.118)",
-            bottom: "calc(min(110vh, 1100px) / -2 + min(110vh, 1100px) * 0.118)",
+            width: "min(140vh, 1400px)",
+            height: "min(140vh, 1400px)",
+            right: "calc(min(140vh, 1400px) / -2)",
+            bottom: "calc(min(140vh, 1400px) / -2)",
           }}
         >
           <circle cx="50" cy="50" r="39.05" fill="none" stroke="#030403" strokeWidth="18.9" />
