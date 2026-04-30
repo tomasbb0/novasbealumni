@@ -83,9 +83,9 @@ export function NovaLogo({
           0%   { transform: translateY(calc(var(--nl-fall) * -1)); }
           100% { transform: translateY(0); }
         }
-        @keyframes nlBounceUp {
-          0%   { transform: translate(calc(var(--nl-ball-x) * -1), var(--nl-compress)); }
-          100% { transform: translate(0, 0); }
+        @keyframes nlBallSlide {
+          0%   { transform: translateX(calc(var(--nl-ball-x) * -1)); }
+          100% { transform: translateX(0); }
         }
         @keyframes nlDashGrow {
           0%   { transform: scaleX(0.32); }
@@ -103,8 +103,8 @@ export function NovaLogo({
         }
         /* Ball starts compressed (below resting), then rises to natural top-of-dash position once. */
         .nova-logo-animate .nl-cd-circle {
-          transform: translate(calc(var(--nl-ball-x) * -1), var(--nl-compress));
-          animation: nlBounceUp 0.9s cubic-bezier(.25,.7,.35,1) 0.6s 1 forwards;
+          transform: translateX(calc(var(--nl-ball-x) * -1));
+          animation: nlBallSlide 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
         }
         /* Dash grows rightward in sync with the ball rising. */
         .nova-logo-animate .nl-cd-dash {
