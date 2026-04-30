@@ -45,7 +45,7 @@ concurrency:
 jobs:
   grab:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 8
     steps:
       - name: Install OCI CLI
         run: |
@@ -93,24 +93,24 @@ jobs:
             echo "have_a1=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Resolve availability domain
+      - name: Resolve availability domains
         if: steps.precheck.outputs.have_a1 == 'false'
         id: ad
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
           REQUESTED_AD: ${{ vars.OCI_AD }}
         run: |
-          ads=$(oci iam availability-domain list \
+          ads_json=$(oci iam availability-domain list \
             --compartment-id "$OCI_TENANCY_OCID" \
             --query 'data[*].name' --raw-output)
-          echo "ADs available: $ads"
+          echo "ADs available: $ads_json"
           if [ -n "$REQUESTED_AD" ]; then
-            chosen="$REQUESTED_AD"
+            ads_list="$REQUESTED_AD"
           else
-            chosen=$(echo "$ads" | python3 -c "import sys,json; print(json.load(sys.stdin)[0])")
+            ads_list=$(echo "$ads_json" | python3 -c "import sys,json; print(' '.join(json.load(sys.stdin)))")
           fi
-          echo "Targeting AD: $chosen"
-          echo "ad=$chosen" >> "$GITHUB_OUTPUT"
+          echo "Will rotate through: $ads_list"
+          echo "ads=$ads_list" >> "$GITHUB_OUTPUT"
 
       - name: Resolve latest Ubuntu 24.04 ARM image
         if: steps.precheck.outputs.have_a1 == 'false'
@@ -132,60 +132,94 @@ jobs:
           echo "Image: $img"
           echo "id=$img" >> "$GITHUB_OUTPUT"
 
-      - name: Try to launch A1.Flex instance
+      - name: Try to launch A1.Flex (in-run loop, multi-AD)
         if: steps.precheck.outputs.have_a1 == 'false'
         id: launch
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_SUBNET_OCID: ${{ secrets.OCI_SUBNET_OCID }}
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
-          AD: ${{ steps.ad.outputs.ad }}
+          ADS: ${{ steps.ad.outputs.ads }}
           IMAGE_ID: ${{ steps.image.outputs.id }}
           OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '4' }}
           MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '24' }}
           DISPLAY_NAME: ${{ vars.OCI_INSTANCE_NAME || 'alumni-agent' }}
         run: |
           set +e
-          out=$(oci compute instance launch \
-            --availability-domain "$AD" \
-            --compartment-id "$OCI_TENANCY_OCID" \
-            --shape "VM.Standard.A1.Flex" \
-            --shape-config "{\"ocpus\": $OCPUS, \"memoryInGBs\": $MEMORY}" \
-            --image-id "$IMAGE_ID" \
-            --subnet-id "$OCI_SUBNET_OCID" \
-            --assign-public-ip true \
-            --display-name "$DISPLAY_NAME" \
-            --metadata "{\"ssh_authorized_keys\": \"$OCI_SSH_PUBLIC_KEY\"}" \
-            --wait-for-state RUNNING \
-            --max-wait-seconds 180 2>&1)
-          rc=$?
-          echo "$out"
-          if [ $rc -eq 0 ]; then
-            echo "landed=true" >> "$GITHUB_OUTPUT"
-            iid=$(echo "$out" | python3 -c "import sys,json,re; data=sys.stdin.read(); m=re.search(r'\"id\": \"(ocid1\\.instance\\.[^\"]+)\"', data); print(m.group(1) if m else '')")
-            echo "instance_id=$iid" >> "$GITHUB_OUTPUT"
-          else
-            echo "landed=false" >> "$GITHUB_OUTPUT"
-            if echo "$out" | grep -qiE "Out of (host )?capacity|InternalError"; then
-              echo "Capacity miss. Will retry on next cron tick."
-              exit 0
-            fi
-            if echo "$out" | grep -qiE "TooManyRequests|Too Many Requests|429"; then
-              echo "Rate limited. Backing off."
-              exit 0
-            fi
-            echo "Real error, failing the job:" >&2
-            echo "$out" >&2
-            exit 1
-          fi
+          # Loop for ~5.5 minutes, trying every AD with ~20s spacing.
+          # Job timeout is 8 min so we stay well within bounds.
+          end_ts=$(( $(date +%s) + 330 ))
+          attempt=0
+          ad_array=( $ADS )
+          while [ "$(date +%s)" -lt "$end_ts" ]; do
+            for AD in "${ad_array[@]}"; do
+              attempt=$((attempt + 1))
+              echo ""
+              echo "=== Attempt $attempt | AD: $AD | $(date -u +%H:%M:%S) ==="
+              # Use --wait-for-state PROVISIONING (fast return) instead of RUNNING (~90s wait).
+              # If capacity hits, we get the OCID immediately and the next step waits for RUNNING.
+              out=$(oci compute instance launch \
+                --availability-domain "$AD" \
+                --compartment-id "$OCI_TENANCY_OCID" \
+                --shape "VM.Standard.A1.Flex" \
+                --shape-config "{\"ocpus\": $OCPUS, \"memoryInGBs\": $MEMORY}" \
+                --image-id "$IMAGE_ID" \
+                --subnet-id "$OCI_SUBNET_OCID" \
+                --assign-public-ip true \
+                --display-name "$DISPLAY_NAME" \
+                --metadata "{\"ssh_authorized_keys\": \"$OCI_SSH_PUBLIC_KEY\"}" \
+                --wait-for-state PROVISIONING \
+                --wait-for-state RUNNING \
+                --max-wait-seconds 30 2>&1)
+              rc=$?
+              if [ $rc -eq 0 ] || echo "$out" | grep -q "ocid1.instance."; then
+                # Got an instance OCID back. Either fully RUNNING or still provisioning.
+                iid=$(echo "$out" | python3 -c "import sys,re; d=sys.stdin.read(); m=re.search(r'ocid1\.instance\.[A-Za-z0-9._-]+', d); print(m.group(0) if m else '')")
+                if [ -n "$iid" ]; then
+                  echo ""
+                  echo "🎉 LANDED on attempt $attempt in AD $AD"
+                  echo "Instance: $iid"
+                  echo "landed=true" >> "$GITHUB_OUTPUT"
+                  echo "instance_id=$iid" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+              fi
+              if echo "$out" | grep -qiE "Out of (host )?capacity|InternalError"; then
+                echo "  → capacity miss"
+              elif echo "$out" | grep -qiE "TooManyRequests|Too Many Requests|429"; then
+                echo "  → rate limited, longer backoff"
+                sleep 30
+                continue
+              elif echo "$out" | grep -qiE "LimitExceeded|QuotaExceeded"; then
+                echo "  → quota exhausted, stopping run"
+                echo "$out" >&2
+                echo "landed=false" >> "$GITHUB_OUTPUT"
+                exit 1
+              else
+                # Real unexpected error. Surface it but keep trying.
+                echo "  → unexpected response (logged, continuing):"
+                echo "$out" | head -20
+              fi
+              # Spacing between attempts (well under 10/min API limit).
+              sleep 15
+            done
+          done
+          echo ""
+          echo "Loop ended after $attempt attempts. No capacity this run."
+          echo "landed=false" >> "$GITHUB_OUTPUT"
+          exit 0
 
-      - name: Report public IP
+      - name: Wait for RUNNING and report public IP
         if: steps.launch.outputs.landed == 'true'
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
           INSTANCE_ID: ${{ steps.launch.outputs.instance_id }}
         run: |
-          sleep 10
+          set -e
+          echo "Waiting for instance to reach RUNNING..."
+          oci compute instance get --instance-id "$INSTANCE_ID" \
+            --wait-for-state RUNNING --max-wait-seconds 300 >/dev/null
+          sleep 5
           ip=$(oci compute instance list-vnics \
             --instance-id "$INSTANCE_ID" \
             --query 'data[0]."public-ip"' --raw-output)
