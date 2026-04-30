@@ -40,7 +40,7 @@ export default function Home() {
           </div>
           <div className="relative hidden lg:flex items-center justify-center">
             <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(84,28,101,0.18),_transparent_70%)] blur-2xl" />
-            <NovaCircleDash size={140} color="#000" className="relative" />
+            <NovaCircleDash size={140} dashScale={0.8} color="#000" className="relative" />
           </div>
         </div>
       </section>
@@ -71,7 +71,7 @@ export default function Home() {
       <section className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="rounded-3xl bg-[color:var(--primary)] text-[color:var(--on-primary)] p-10 sm:p-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 opacity-15">
-            <NovaCircleDash size={160} color="#fff" />
+            <NovaCircleDash size={160} dashScale={0.8} color="#fff" />
           </div>
           <div className="relative">
             <div className="text-xs uppercase tracking-widest opacity-80">First event</div>
