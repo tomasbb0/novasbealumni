@@ -37,6 +37,62 @@ function isEmail(s: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
+async function relayWebhook(row: Rsvp) {
+  const url = process.env.RSVP_WEBHOOK_URL;
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "rsvp", row }),
+    });
+  } catch (err) {
+    console.error("rsvp webhook failed", err);
+  }
+}
+
+async function relayDiscord(row: Rsvp) {
+  const url = process.env.DISCORD_WEBHOOK_URL;
+  if (!url) return;
+  const sep = " | ";
+  const parts: string[] = [];
+  parts.push("**New RSVP**" + sep + row.name + " (" + row.email + ")");
+  parts.push("Grad " + row.gradYear + (row.programme ? sep + row.programme : ""));
+  if (row.currentRole) parts.push("Role: " + row.currentRole);
+  parts.push("Attending: " + (row.attending || "yes"));
+  if (row.notes) parts.push("Notes: " + row.notes);
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: parts.join("\n") }),
+    });
+  } catch (err) {
+    console.error("discord webhook failed", err);
+  }
+}
+
+async function relayResend(row: Rsvp) {
+  const key = process.env.RESEND_API_KEY;
+  const to = process.env.RSVP_NOTIFY_EMAIL;
+  if (!key || !to) return;
+  const from = process.env.RSVP_FROM_EMAIL || "Nova SBE Alumni <onboarding@resend.dev>";
+  const subject = "New RSVP: " + row.name;
+  const text = JSON.stringify(row, null, 2);
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + key,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to: [to], subject, text }),
+    });
+  } catch (err) {
+    console.error("resend relay failed", err);
+  }
+}
+
 export async function POST(req: Request) {
   let body: Partial<Rsvp> = {};
   try {
@@ -71,8 +127,8 @@ export async function POST(req: Request) {
     ip: req.headers.get("x-forwarded-for") || undefined,
   };
 
-  // Best-effort persistence. On read-only filesystems (e.g. Vercel serverless)
-  // this will fail; swap for KV / Supabase / Resend before going to prod.
+  console.log("[rsvp]", JSON.stringify(row));
+
   try {
     const all = await readAll();
     if (!all.find((r) => r.email === email)) {
@@ -80,8 +136,10 @@ export async function POST(req: Request) {
       await writeAll(all);
     }
   } catch (err) {
-    console.error("rsvp persist failed", err);
+    console.error("rsvp file persist failed (expected on serverless)", err);
   }
+
+  await Promise.allSettled([relayWebhook(row), relayDiscord(row), relayResend(row)]);
 
   return NextResponse.json({ ok: true });
 }
