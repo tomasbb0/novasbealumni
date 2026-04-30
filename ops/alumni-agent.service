@@ -1,0 +1,28 @@
+[Unit]
+Description=Nova SBE 24/7 Alumni Networker Agent (one tick)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=alumni
+Group=alumni
+WorkingDirectory=/home/alumni/NovaAlumniConnect
+EnvironmentFile=-/etc/default/alumni-agent
+ExecStart=/home/alumni/NovaAlumniConnect/ops/tick.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=600
+# Do not auto-restart on failure; the timer will pick it up next interval.
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/alumni/NovaAlumniConnect /home/alumni/.local/state /home/alumni/.copilot /home/alumni/.cache /tmp
+ProtectHome=read-only
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true

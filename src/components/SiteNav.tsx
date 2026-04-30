@@ -15,6 +15,7 @@ export function SiteNav() {
         <div className="flex items-center gap-6 text-sm text-[color:var(--foreground)]">
           <Link href="/rsvp" className="hover:text-[color:var(--primary)] transition">RSVP</Link>
           <Link href="/survey" className="hover:text-[color:var(--primary)] transition">Survey</Link>
+          <Link href="/connections" className="hover:text-[color:var(--primary)] transition">Connections</Link>
           <Link href="/pitch" className="hover:text-[color:var(--primary)] transition hidden sm:inline">For partners</Link>
           <Link
             href="/rsvp"
