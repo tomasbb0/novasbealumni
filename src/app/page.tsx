@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { brand } from "@/lib/brand";
-import { NMark } from "@/components/NMark";
+import { NovaSBEMark } from "@/components/NovaSBEMark";
 import { CityCycle } from "@/components/CityCycle";
 
 export default function Home() {
@@ -37,8 +37,8 @@ export default function Home() {
             </div>
           </div>
           <div className="relative hidden lg:flex items-center justify-center">
-            <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(84,28,101,0.15),_transparent_70%)] blur-2xl" />
-            <NMark size={280} className="text-black relative" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(84,28,101,0.18),_transparent_70%)] blur-2xl" />
+            <NovaSBEMark variant="circle" className="relative h-72 w-72" alt="Nova SBE" />
           </div>
         </div>
       </section>
@@ -69,7 +69,7 @@ export default function Home() {
       <section className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="rounded-3xl bg-[color:var(--primary)] text-[color:var(--on-primary)] p-10 sm:p-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 opacity-10">
-            <NMark size={320} className="text-white" />
+            <NovaSBEMark variant="circle" className="h-80 w-80 invert" alt="" />
           </div>
           <div className="relative">
             <div className="text-xs uppercase tracking-widest opacity-80">First event</div>

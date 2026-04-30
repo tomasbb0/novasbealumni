@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { brand } from "@/lib/brand";
-import { NMark } from "./NMark";
+import { NovaSBEMark } from "./NovaSBEMark";
 
 export function SiteNav() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
       <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <NMark size={28} strokeWidth={24} className="text-black group-hover:scale-110 transition" />
-          <span className="font-serif text-lg tracking-tight text-[color:var(--foreground)]">
-            {brand.name}
+        <Link href="/" className="flex items-center gap-3 group" aria-label={brand.name}>
+          <NovaSBEMark variant="wordmark" className="h-5 w-auto group-hover:opacity-80 transition" />
+          <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)]" />
+          <span className="hidden sm:inline-block font-serif text-sm tracking-tight text-[color:var(--muted)]">
+            Alumni
           </span>
         </Link>
         <div className="flex items-center gap-6 text-sm text-[color:var(--foreground)]">
