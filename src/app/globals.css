@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 :root {
+  /* Nova SBE official segment palette — Alumni (#EB6012) per nova-sbe-brandbook-logo.pdf */
   --background: #ffffff;
-  --foreground: #030403;
+  --foreground: #000000;
   --muted: #6b6b6b;
   --border: #e5e5e5;
-  --card: #f5efe9;
-  --primary: #88593b;
-  --primary-700: #6b4429;
-  --primary-50: #f5efe9;
-  --accent: #577482;
+  --card: #fdeee3;
+  --primary: #eb6012;
+  --primary-700: #b94a0d;
+  --primary-50: #fdeee3;
+  --accent: #033f85;
   --on-primary: #ffffff;
 }
 
