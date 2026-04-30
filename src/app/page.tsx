@@ -9,8 +9,22 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-[color:var(--border)]">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(84,28,101,0.10),_transparent_55%)]" />
-        <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32 grid gap-16 lg:grid-cols-[1.4fr_1fr] items-center">
-          <div>
+        {/* Giant Nova circle: positioned so its centre is the bottom-right corner of the hero,
+            so only the top-left quarter is visible bleeding in from the right edge. */}
+        <img
+          src="/brand/novasbe-circle.svg"
+          alt=""
+          aria-hidden
+          className="hidden lg:block pointer-events-none select-none absolute"
+          style={{
+            width: "min(110vh, 1100px)",
+            height: "min(110vh, 1100px)",
+            right: "calc(min(110vh, 1100px) / -2)",
+            bottom: "calc(min(110vh, 1100px) / -2)",
+          }}
+        />
+        <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32 relative">
+          <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white px-3 py-1 text-xs uppercase tracking-widest text-[color:var(--primary)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)]" />
               {brand.schoolShort} · {brand.city}
@@ -37,10 +51,6 @@ export default function Home() {
                 Tell us what you want
               </Link>
             </div>
-          </div>
-          <div className="relative hidden lg:flex items-center justify-center">
-            <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(84,28,101,0.18),_transparent_70%)] blur-2xl" />
-            <NovaCircleDash size={140} dashScale={0.56} color="#000" className="relative" />
           </div>
         </div>
       </section>

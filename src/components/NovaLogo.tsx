@@ -26,7 +26,7 @@ export function NovaLogo({
   const circle = Math.round(size * 0.93); // O diameter relative to letter height
   const sigH = Math.max(12, Math.round(size * 0.64));
   const dashFinalWidth = circle * 2.97;
-  const dashStartScale = 0.32;
+  const dashStartScale = 0.42; // 130% of previous 0.32 baseline
   const vaShrink = Math.round(dashFinalWidth * (1 - dashStartScale));
   const ballShiftX = Math.round((dashFinalWidth * (1 - dashStartScale)) / 2);
   const fallDistance = Math.round(size * 2.5);
@@ -42,6 +42,7 @@ export function NovaLogo({
           ["--nl-ball-x" as string]: `${ballShiftX}px`,
           ["--nl-fall" as string]: `${fallDistance}px`,
           ["--nl-compress" as string]: `${compress}px`,
+          ["--nl-dash-start" as string]: `${dashStartScale}`,
         } as React.CSSProperties
       }
       aria-label="Nova SBE Alumni"
@@ -88,7 +89,7 @@ export function NovaLogo({
           100% { transform: translateX(0); }
         }
         @keyframes nlDashGrow {
-          0%   { transform: scaleX(0.32); }
+          0%   { transform: scaleX(var(--nl-dash-start)); }
           100% { transform: scaleX(1); }
         }
         @keyframes nlVADrag {
@@ -109,7 +110,7 @@ export function NovaLogo({
         /* Dash grows rightward in sync with the ball rising. */
         .nova-logo-animate .nl-cd-dash {
           transform-origin: left center;
-          transform: scaleX(0.32);
+          transform: scaleX(var(--nl-dash-start));
           animation: nlDashGrow 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
         }
         /* V+A get dragged right as the dash extends. */
