@@ -1,6 +1,6 @@
 export const brand = {
-  name: "Nova Alumni NY",
-  shortName: "NA NY",
+  name: "Nova SBE Alumni",
+  shortName: "Nova SBE Alumni",
   tagline: "The Nova SBE alumni community in New York City.",
   description:
     "A private network for Nova SBE graduates living and working in New York. Mixers, intros, and the occasional bottle of vinho verde.",
