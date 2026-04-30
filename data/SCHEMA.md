@@ -13,7 +13,7 @@ A push to `main` rebuilds the static site on GitHub Pages.
 To prevent the two agents from clobbering each other:
 
 - **Sibling agent owns**: `src/app/onboard/**`, `src/app/agent/**`, `src/app/admin/**`, `src/app/alumni/[id]/**`, `src/lib/activity.ts`, the `/onboard` chat backend (wherever it lives), and writes to `data/profiles.json`.
-- **This agent owns**: `.github/workflows/alumni-agent.yml`, `.github/agent-prompts/networker.md`, `ops/**`, `src/app/connections/**`, `src/lib/connections.ts`, and writes to `data/proposed-connections.json`.
+- **This agent owns**: `.github/workflows/alumni-agent.yml`, `.github/agent-prompts/networker.md`, `ops/**`, `functions/api/onboard-chat.ts`, `src/app/connections/**`, `src/lib/connections.ts`, and writes to `data/proposed-connections.json`.
 - **Shared**: `data/SCHEMA.md`, `data/agent-activity.json`. Edits must be additive (new fields, new event kinds), never remove fields the other side reads.
 
 Neither agent deletes the other's files. If the architecture needs to change, propose it through the user, not unilaterally.
