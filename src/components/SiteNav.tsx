@@ -25,6 +25,7 @@ export function SiteNav() {
           {configured && user ? (
             <>
               <Link href="/dashboard" className="hover:text-[color:var(--primary)] transition">Dashboard</Link>
+              <Link href="/directory" className="hover:text-[color:var(--primary)] transition">Directory</Link>
               <button onClick={signOut} className="text-[color:var(--muted)] hover:text-[color:var(--primary)] transition">Sign out</button>
             </>
           ) : (
