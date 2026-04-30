@@ -26,11 +26,14 @@ export function NovaLogo({
   const circle = Math.round(size * 0.93); // O diameter relative to letter height
   const sigH = Math.max(12, Math.round(size * 0.64));
   const dashFinalWidth = circle * 2.97;
-  const dashStartScale = 0.42; // 130% of previous 0.32 baseline
-  const vaShrink = Math.round(dashFinalWidth * (1 - dashStartScale));
-  const ballShiftX = Math.round((dashFinalWidth * (1 - dashStartScale)) / 2);
+  const dashStartScale = 0.42; // dash width at moment of landing
+  const dashEndScale = 1.25;   // dash extends past base width
+  const ballStartX = -Math.round((dashFinalWidth * (1 - dashStartScale)) / 2);
+  const ballEndX = Math.round((dashFinalWidth * (dashEndScale - 1)) / 2);
+  const ballLiftY = -Math.round(size * 0.12); // ball rises slightly as dash grows
+  const vaStart = -Math.round(dashFinalWidth * (1 - dashStartScale));
+  const vaEnd = Math.round(dashFinalWidth * (dashEndScale - 1));
   const fallDistance = Math.round(size * 2.5);
-  const compress = Math.round(size * 0.5);
 
   return (
     <span
@@ -38,11 +41,14 @@ export function NovaLogo({
       style={
         {
           lineHeight: 0,
-          ["--nl-va-shrink" as string]: `${vaShrink}px`,
-          ["--nl-ball-x" as string]: `${ballShiftX}px`,
+          ["--nl-va-start" as string]: `${vaStart}px`,
+          ["--nl-va-end" as string]: `${vaEnd}px`,
+          ["--nl-ball-start-x" as string]: `${ballStartX}px`,
+          ["--nl-ball-end-x" as string]: `${ballEndX}px`,
+          ["--nl-ball-lift-y" as string]: `${ballLiftY}px`,
           ["--nl-fall" as string]: `${fallDistance}px`,
-          ["--nl-compress" as string]: `${compress}px`,
           ["--nl-dash-start" as string]: `${dashStartScale}`,
+          ["--nl-dash-end" as string]: `${dashEndScale}`,
         } as React.CSSProperties
       }
       aria-label="Nova SBE Alumni"
@@ -85,16 +91,16 @@ export function NovaLogo({
           100% { transform: translateY(0); }
         }
         @keyframes nlBallSlide {
-          0%   { transform: translateX(calc(var(--nl-ball-x) * -1)); }
-          100% { transform: translateX(0); }
+          0%   { transform: translate(var(--nl-ball-start-x), 0); }
+          100% { transform: translate(var(--nl-ball-end-x), var(--nl-ball-lift-y)); }
         }
         @keyframes nlDashGrow {
           0%   { transform: scaleX(var(--nl-dash-start)); }
-          100% { transform: scaleX(1); }
+          100% { transform: scaleX(var(--nl-dash-end)); }
         }
         @keyframes nlVADrag {
-          0%   { transform: translateX(calc(var(--nl-va-shrink) * -1)); }
-          100% { transform: translateX(0); }
+          0%   { transform: translateX(var(--nl-va-start)); }
+          100% { transform: translateX(var(--nl-va-end)); }
         }
         @keyframes nlSig { 0% { opacity: 0; } 100% { opacity: 1; } }
 
@@ -104,18 +110,18 @@ export function NovaLogo({
         }
         /* Ball starts compressed (below resting), then rises to natural top-of-dash position once. */
         .nova-logo-animate .nl-cd-circle {
-          transform: translateX(calc(var(--nl-ball-x) * -1));
+          transform: translate(var(--nl-ball-start-x), 0);
           animation: nlBallSlide 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
         }
-        /* Dash grows rightward in sync with the ball rising. */
+        /* Dash grows rightward, past its base width, in sync with the ball. */
         .nova-logo-animate .nl-cd-dash {
           transform-origin: left center;
           transform: scaleX(var(--nl-dash-start));
           animation: nlDashGrow 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
         }
-        /* V+A get dragged right as the dash extends. */
+        /* V+A get dragged right as the dash extends past base width. */
         .nova-logo-animate .nl-va {
-          transform: translateX(calc(var(--nl-va-shrink) * -1));
+          transform: translateX(var(--nl-va-start));
           animation: nlVADrag 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
         }
         .nova-logo-animate .nl-sig {
