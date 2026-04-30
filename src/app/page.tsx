@@ -37,7 +37,7 @@ export default function Home() {
           </div>
           <div className="relative hidden lg:flex items-center justify-center">
             <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(84,28,101,0.15),_transparent_70%)] blur-2xl" />
-            <NMark size={280} className="text-[color:var(--primary)] relative" />
+            <NMark size={280} className="text-black relative" />
           </div>
         </div>
       </section>

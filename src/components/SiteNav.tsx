@@ -7,7 +7,7 @@ export function SiteNav() {
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
       <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <NMark size={26} className="text-[color:var(--primary)] group-hover:scale-110 transition" />
+          <NMark size={28} className="text-black group-hover:scale-110 transition" />
           <span className="font-serif text-lg tracking-tight text-[color:var(--foreground)]">
             {brand.name}
           </span>
