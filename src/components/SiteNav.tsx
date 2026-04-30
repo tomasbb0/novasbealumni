@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { brand } from "@/lib/brand";
 import { NovaLogo } from "./NovaLogo";
+import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/lib/auth";
 
 export function SiteNav() {
-  const { configured, user, signOut } = useAuth();
+  const { configured, user } = useAuth();
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
       <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
@@ -24,19 +25,21 @@ export function SiteNav() {
           <Link href="/pitch" className="hover:text-[color:var(--primary)] transition hidden sm:inline">For partners</Link>
           {configured && user ? (
             <>
-              <Link href="/dashboard" className="hover:text-[color:var(--primary)] transition">Dashboard</Link>
-              <Link href="/directory" className="hover:text-[color:var(--primary)] transition">Directory</Link>
-              <button onClick={signOut} className="text-[color:var(--muted)] hover:text-[color:var(--primary)] transition">Sign out</button>
+              <Link href="/dashboard" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Dashboard</Link>
+              <Link href="/directory" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Directory</Link>
+              <UserMenu />
             </>
           ) : (
-            <Link href="/signin" className="hover:text-[color:var(--primary)] transition">Sign in</Link>
+            <>
+              <Link href="/signin" className="hover:text-[color:var(--primary)] transition">Sign in</Link>
+              <Link
+                href="/onboard"
+                className="ml-2 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition"
+              >
+                Join the list
+              </Link>
+            </>
           )}
-          <Link
-            href="/onboard"
-            className="ml-2 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition"
-          >
-            Join the list
-          </Link>
         </div>
       </nav>
     </header>
