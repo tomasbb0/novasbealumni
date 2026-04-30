@@ -1,0 +1,204 @@
+name: oracle-arm-grabber
+
+# Hunts for free A1.Flex (4 OCPU, 24 GB) capacity in your Oracle tenancy.
+# Runs every 5 minutes on GitHub Actions cron. When it lands a VM, the next
+# tick will detect the running instance and self-disable.
+#
+# Required repo secrets (already set):
+#   OCI_TENANCY_OCID
+#   OCI_USER_OCID
+#   OCI_FINGERPRINT
+#   OCI_REGION
+#   OCI_PRIVATE_KEY     (raw .pem contents)
+#   OCI_SSH_PUBLIC_KEY  (raw ssh-rsa AAAA... line)
+#   OCI_SUBNET_OCID     (public subnet you want the VM in)
+#
+# Optional repo variables (vars, not secrets):
+#   OCI_AD              availability domain to target. defaults to AD-1.
+#                       valid values look like 'sJBg:EU-TURIN-1-AD-1'.
+#                       leave empty to let the workflow auto-pick the first AD.
+#   OCI_SHAPE_OCPUS     defaults to 4
+#   OCI_SHAPE_MEMORY    defaults to 24 (in GB)
+#   OCI_INSTANCE_NAME   defaults to alumni-agent
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      ocpus:
+        description: "OCPUs to request (1-4 free)"
+        required: false
+        default: "4"
+      memory:
+        description: "Memory in GB (1-24 free)"
+        required: false
+        default: "24"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-arm-grabber
+  cancel-in-progress: false
+
+jobs:
+  grab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Install OCI CLI
+        run: |
+          curl -fsSL -o install.sh https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh
+          sudo bash install.sh --accept-all-defaults --install-dir /opt/oci-cli --exec-dir /usr/local/bin --update-path-and-enable-tab-completion >/dev/null 2>&1
+          oci --version
+
+      - name: Write OCI config
+        env:
+          OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
+          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_REGION: ${{ secrets.OCI_REGION }}
+          OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.oci
+          chmod 700 ~/.oci
+          printf '%s\n' "$OCI_PRIVATE_KEY" > ~/.oci/key.pem
+          chmod 600 ~/.oci/key.pem
+          cat > ~/.oci/config <<EOF
+          [DEFAULT]
+          user=$OCI_USER_OCID
+          fingerprint=$OCI_FINGERPRINT
+          tenancy=$OCI_TENANCY_OCID
+          region=$OCI_REGION
+          key_file=$HOME/.oci/key.pem
+          EOF
+          chmod 600 ~/.oci/config
+
+      - name: Stop if a free A1 instance already exists
+        id: precheck
+        env:
+          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+        run: |
+          existing=$(oci compute instance list \
+            --compartment-id "$OCI_TENANCY_OCID" \
+            --lifecycle-state RUNNING \
+            --query "data[?contains(\"shape\", 'A1.Flex')].\"display-name\"" \
+            --raw-output 2>/dev/null || echo "[]")
+          echo "existing_a1=$existing"
+          if [ "$existing" != "[]" ] && [ -n "$existing" ]; then
+            echo "have_a1=true" >> "$GITHUB_OUTPUT"
+            echo "A1 already running. Nothing to do."
+          else
+            echo "have_a1=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve availability domain
+        if: steps.precheck.outputs.have_a1 == 'false'
+        id: ad
+        env:
+          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+          REQUESTED_AD: ${{ vars.OCI_AD }}
+        run: |
+          ads=$(oci iam availability-domain list \
+            --compartment-id "$OCI_TENANCY_OCID" \
+            --query 'data[*].name' --raw-output)
+          echo "ADs available: $ads"
+          if [ -n "$REQUESTED_AD" ]; then
+            chosen="$REQUESTED_AD"
+          else
+            chosen=$(echo "$ads" | python3 -c "import sys,json; print(json.load(sys.stdin)[0])")
+          fi
+          echo "Targeting AD: $chosen"
+          echo "ad=$chosen" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve latest Ubuntu 24.04 ARM image
+        if: steps.precheck.outputs.have_a1 == 'false'
+        id: image
+        env:
+          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+        run: |
+          img=$(oci compute image list \
+            --compartment-id "$OCI_TENANCY_OCID" \
+            --operating-system "Canonical Ubuntu" \
+            --operating-system-version "24.04" \
+            --shape "VM.Standard.A1.Flex" \
+            --sort-by TIMECREATED --sort-order DESC --limit 1 \
+            --query 'data[0].id' --raw-output)
+          if [ -z "$img" ] || [ "$img" = "null" ]; then
+            echo "Could not resolve image OCID" >&2
+            exit 1
+          fi
+          echo "Image: $img"
+          echo "id=$img" >> "$GITHUB_OUTPUT"
+
+      - name: Try to launch A1.Flex instance
+        if: steps.precheck.outputs.have_a1 == 'false'
+        id: launch
+        env:
+          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_SUBNET_OCID: ${{ secrets.OCI_SUBNET_OCID }}
+          OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+          AD: ${{ steps.ad.outputs.ad }}
+          IMAGE_ID: ${{ steps.image.outputs.id }}
+          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '4' }}
+          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '24' }}
+          DISPLAY_NAME: ${{ vars.OCI_INSTANCE_NAME || 'alumni-agent' }}
+        run: |
+          set +e
+          out=$(oci compute instance launch \
+            --availability-domain "$AD" \
+            --compartment-id "$OCI_TENANCY_OCID" \
+            --shape "VM.Standard.A1.Flex" \
+            --shape-config "{\"ocpus\": $OCPUS, \"memoryInGBs\": $MEMORY}" \
+            --image-id "$IMAGE_ID" \
+            --subnet-id "$OCI_SUBNET_OCID" \
+            --assign-public-ip true \
+            --display-name "$DISPLAY_NAME" \
+            --metadata "{\"ssh_authorized_keys\": \"$OCI_SSH_PUBLIC_KEY\"}" \
+            --wait-for-state RUNNING \
+            --max-wait-seconds 180 2>&1)
+          rc=$?
+          echo "$out"
+          if [ $rc -eq 0 ]; then
+            echo "landed=true" >> "$GITHUB_OUTPUT"
+            iid=$(echo "$out" | python3 -c "import sys,json,re; data=sys.stdin.read(); m=re.search(r'\"id\": \"(ocid1\\.instance\\.[^\"]+)\"', data); print(m.group(1) if m else '')")
+            echo "instance_id=$iid" >> "$GITHUB_OUTPUT"
+          else
+            echo "landed=false" >> "$GITHUB_OUTPUT"
+            if echo "$out" | grep -qiE "Out of (host )?capacity|InternalError"; then
+              echo "Capacity miss. Will retry on next cron tick."
+              exit 0
+            fi
+            if echo "$out" | grep -qiE "TooManyRequests|Too Many Requests|429"; then
+              echo "Rate limited. Backing off."
+              exit 0
+            fi
+            echo "Real error, failing the job:" >&2
+            echo "$out" >&2
+            exit 1
+          fi
+
+      - name: Report public IP
+        if: steps.launch.outputs.landed == 'true'
+        env:
+          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+          INSTANCE_ID: ${{ steps.launch.outputs.instance_id }}
+        run: |
+          sleep 10
+          ip=$(oci compute instance list-vnics \
+            --instance-id "$INSTANCE_ID" \
+            --query 'data[0]."public-ip"' --raw-output)
+          echo "================================================================"
+          echo "  🎉  A1.Flex landed!"
+          echo "  Instance: $INSTANCE_ID"
+          echo "  Public IP: $ip"
+          echo "  SSH: ssh -i ~/.ssh/id_rsa ubuntu@$ip"
+          echo "================================================================"
+          echo "## Oracle A1 instance landed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Instance OCID: \`$INSTANCE_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Public IP: \`$ip\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SSH: \`ssh -i ~/.ssh/id_rsa ubuntu@$ip\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Disable this workflow now: https://github.com/${{ github.repository }}/actions/workflows/oracle-arm-grabber.yml" >> "$GITHUB_STEP_SUMMARY"
