@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { getProfile, isProfileComplete, type Profile } from "@/lib/profile";
 import { brand } from "@/lib/brand";
+import { listMyConnections, respondToConnection, type Connection } from "@/lib/connectRequests";
 
 type EventLite = { id: string; title: string; dateLabel: string; venueLabel: string };
 const events: EventLite[] = [
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [nearby, setNearby] = useState<Profile[]>([]);
   const [intros, setIntros] = useState<Profile[]>([]);
+  const [incoming, setIncoming] = useState<Array<Connection & { requesterProfile?: Profile }>>([]);
 
   useEffect(() => {
     if (!ready) return;
@@ -69,6 +71,17 @@ export default function DashboardPage() {
             .limit(3);
           setIntros((data as Profile[]) || []);
         }
+
+        try {
+          const all = await listMyConnections();
+          const pendingIn = all.filter((c) => c.addressee === me!.id && c.status === "pending");
+          if (pendingIn.length > 0) {
+            const ids = pendingIn.map((c) => c.requester);
+            const { data: pp } = await sb.from("profiles").select("*").in("id", ids);
+            const byId = new Map((pp as Profile[] || []).map((p) => [p.id, p]));
+            setIncoming(pendingIn.map((c) => ({ ...c, requesterProfile: byId.get(c.requester) })));
+          }
+        } catch { /* table may not yet exist */ }
       } finally {
         setLoading(false);
       }
@@ -108,6 +121,40 @@ export default function DashboardPage() {
           <button onClick={signOut} className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Sign out</button>
         </div>
       </header>
+
+      {incoming.length > 0 && (
+        <div className="mt-8 rounded-lg border border-[color:var(--primary)] bg-[color:var(--primary-50)] p-5">
+          <h2 className="font-serif text-lg text-[color:var(--foreground)]">
+            {incoming.length} connection request{incoming.length === 1 ? "" : "s"} waiting
+          </h2>
+          <ul className="mt-3 space-y-2">
+            {incoming.map((c) => (
+              <li key={c.id} className="flex items-center gap-3 rounded-md bg-white p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-[color:var(--foreground)] truncate">
+                    {c.requesterProfile?.full_name || "Someone"}
+                  </div>
+                  <div className="text-xs text-[color:var(--muted)] truncate">
+                    {[c.requesterProfile?.current_role, c.requesterProfile?.current_company].filter(Boolean).join(" @ ")}
+                  </div>
+                </div>
+                <button
+                  onClick={async () => { await respondToConnection(c.id, "accepted"); setIncoming((x) => x.filter((y) => y.id !== c.id)); }}
+                  className="text-xs font-medium text-white bg-[color:var(--primary)] hover:bg-[color:var(--primary-700)] rounded-full px-3 py-1.5 transition"
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={async () => { await respondToConnection(c.id, "declined"); setIncoming((x) => x.filter((y) => y.id !== c.id)); }}
+                  className="text-xs text-[color:var(--muted)] hover:text-[color:var(--primary)] transition"
+                >
+                  Decline
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-10 grid gap-8 lg:grid-cols-3">
         <Section title="Upcoming events" empty="No events on the calendar yet.">

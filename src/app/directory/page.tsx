@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import type { Profile } from "@/lib/profile";
+import { listMyConnections, sendConnectionRequest, respondToConnection, statusBetween, type Connection } from "@/lib/connectRequests";
 
 export default function DirectoryPage() {
   const { ready, configured, user } = useAuth();
   const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [conns, setConns] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [city, setCity] = useState("");
@@ -28,6 +30,7 @@ export default function DirectoryPage() {
       const sb = getSupabase();
       const { data } = await sb.from("profiles").select("*").order("updated_at", { ascending: false }).limit(500);
       setProfiles((data as Profile[]) || []);
+      try { setConns(await listMyConnections()); } catch { /* RLS or schema not yet applied */ }
       setLoading(false);
     })();
   }, [ready, configured, user, router]);
@@ -89,7 +92,7 @@ export default function DirectoryPage() {
         </ul>
 
         <aside className="lg:sticky lg:top-20 self-start">
-          {selected ? <ProfilePanel p={selected} /> : (
+          {selected ? <ProfilePanel p={selected} myId={user?.id} conns={conns} onChange={async () => { try { setConns(await listMyConnections()); } catch {} }} /> : (
             <div className="rounded-lg border border-dashed border-[color:var(--border)] p-6 text-sm text-[color:var(--muted)]">
               Pick someone on the left to see their full profile.
             </div>
@@ -100,7 +103,24 @@ export default function DirectoryPage() {
   );
 }
 
-function ProfilePanel({ p }: { p: Profile }) {
+function ProfilePanel({ p, myId, conns, onChange }: { p: Profile; myId?: string; conns: Connection[]; onChange: () => void | Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const isMe = myId && p.id === myId;
+  const rel = myId ? statusBetween(myId, p.id, conns) : { state: "none" as const };
+
+  async function send() {
+    setBusy(true); setErr(null);
+    try { await sendConnectionRequest(p.id); await onChange(); } catch (e) { setErr(e instanceof Error ? e.message : "Could not send request"); }
+    finally { setBusy(false); }
+  }
+  async function respond(status: "accepted" | "declined") {
+    if (!rel.id) return;
+    setBusy(true); setErr(null);
+    try { await respondToConnection(rel.id, status); await onChange(); } catch (e) { setErr(e instanceof Error ? e.message : "Could not update"); }
+    finally { setBusy(false); }
+  }
+
   return (
     <div className="rounded-lg border border-[color:var(--border)] bg-white p-6">
       <div className="flex items-center gap-3">
@@ -116,14 +136,36 @@ function ProfilePanel({ p }: { p: Profile }) {
         <Row label="Offering" value={p.offering} multiline />
         <Row label="Looking for" value={p.seeking} multiline />
       </dl>
-      {p.linkedin_url && (
-        <a href={p.linkedin_url} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-2 text-xs font-medium text-white hover:bg-[color:var(--primary-700)] transition">
-          LinkedIn →
-        </a>
+
+      {!isMe && (
+        <div className="mt-5 flex items-center gap-2 flex-wrap">
+          {rel.state === "none" && (
+            <button onClick={send} disabled={busy} className={btnPrimary}>{busy ? "Sending…" : "Connect"}</button>
+          )}
+          {rel.state === "outgoing-pending" && (
+            <span className="text-xs text-[color:var(--muted)]">Request sent. Waiting for reply.</span>
+          )}
+          {rel.state === "incoming-pending" && (
+            <>
+              <button onClick={() => respond("accepted")} disabled={busy} className={btnPrimary}>Accept</button>
+              <button onClick={() => respond("declined")} disabled={busy} className={btnGhost}>Decline</button>
+            </>
+          )}
+          {rel.state === "accepted" && <span className="text-xs text-[color:var(--primary)] font-medium">Connected ✓</span>}
+          {rel.state === "declined" && <span className="text-xs text-[color:var(--muted)]">Request declined.</span>}
+
+          {p.linkedin_url && (
+            <a href={p.linkedin_url} target="_blank" rel="noreferrer" className={btnGhost}>LinkedIn →</a>
+          )}
+        </div>
       )}
+      {err && <p className="mt-3 text-xs text-red-600">{err}</p>}
     </div>
   );
 }
+
+const btnPrimary = "inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-2 text-xs font-medium text-white hover:bg-[color:var(--primary-700)] transition disabled:opacity-50";
+const btnGhost = "inline-flex items-center rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-medium text-[color:var(--foreground)] hover:border-[color:var(--primary)] hover:text-[color:var(--primary)] transition";
 
 function Row({ label, value, multiline }: { label: string; value?: string | number | null; multiline?: boolean }) {
   if (!value) return null;
