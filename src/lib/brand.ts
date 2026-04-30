@@ -8,8 +8,10 @@ export const brand = {
   school: "Nova School of Business and Economics",
   schoolShort: "Nova SBE",
   whatsappInviteUrl: "https://chat.whatsapp.com/REPLACE_ME",
-  surveyUrl: "https://tally.so/r/REPLACE_ME",
-  contactEmail: "hello@novaalumni.nyc",
+  tallyRsvpId: process.env.NEXT_PUBLIC_TALLY_RSVP_ID || "",
+  tallySurveyId: process.env.NEXT_PUBLIC_TALLY_SURVEY_ID || "",
+  contactEmail: "hello@novasbealumni.com",
+  siteUrl: "https://novasbealumni.com",
   firstEvent: {
     name: "Nova NY Mixer · Volume I",
     dateLabel: "Date to be announced",
@@ -20,3 +22,4 @@ export const brand = {
     linkedin: "",
   },
 };
+

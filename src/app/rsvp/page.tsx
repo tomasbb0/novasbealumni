@@ -1,5 +1,5 @@
 import { brand } from "@/lib/brand";
-import { RsvpForm } from "@/components/RsvpForm";
+import { TallyEmbed } from "@/components/TallyEmbed";
 
 export const metadata = { title: "RSVP" };
 
@@ -18,8 +18,9 @@ export default function RsvpPage() {
         the moment we lock the date.
       </p>
       <div className="mt-10">
-        <RsvpForm />
+        <TallyEmbed formId={brand.tallyRsvpId} title="RSVP form" minHeight={720} />
       </div>
     </div>
   );
 }
+

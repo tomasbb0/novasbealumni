@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://novaalumni.nyc"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://novasbealumni.com"),
   title: { default: brand.name, template: `%s · ${brand.name}` },
   description: brand.description,
   openGraph: {
