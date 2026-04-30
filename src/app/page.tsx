@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { brand } from "@/lib/brand";
 import { NMark } from "@/components/NMark";
+import { CityCycle } from "@/components/CityCycle";
 
 export default function Home() {
   return (
@@ -15,7 +16,7 @@ export default function Home() {
               {brand.schoolShort} · {brand.city}
             </div>
             <h1 className="mt-6 font-serif text-5xl sm:text-6xl leading-[1.05] max-w-3xl text-[color:var(--foreground)]">
-              The Nova SBE alumni community in <span className="text-[color:var(--primary)]">New York</span>.
+              The Nova SBE alumni community in <CityCycle className="text-[color:var(--primary)] whitespace-nowrap" />.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[color:var(--muted)] leading-relaxed">
               {brand.description}
