@@ -22,7 +22,7 @@ name: 24/7 Alumni Networker Agent
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       effort:
@@ -88,7 +88,7 @@ jobs:
           copilot --version
           which copilot
 
-      - name: Short-circuit if not enough profiles
+      - name: Short-circuit if not enough profiles or nothing new
         id: gate
         if: steps.secretcheck.outputs.configured == 'true'
         run: |
@@ -97,9 +97,32 @@ jobs:
           if [ "$PROFILE_COUNT" -lt 2 ]; then
             echo "Only $PROFILE_COUNT profile(s). Need at least 2 to match. Skipping LLM call."
             echo "ok=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ok=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          # Skip-if-no-new-profiles guard: at 15-min cadence we do not want
+          # to call Copilot 96 times a day if nothing changed. If the most
+          # recent commit touching data/profiles.json is already an ancestor
+          # of (or equal to) the most recent commit by nova-networker-bot,
+          # nothing new has happened since our last tick. FORCE=true bypasses.
+          if [ "${{ env.FORCE }}" = "true" ]; then
+            echo "FORCE=true. Running tick."
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          LAST_BOT_COMMIT=$(git log --author='nova-networker-bot' -1 --format=%H 2>/dev/null || echo "")
+          if [ -n "$LAST_BOT_COMMIT" ]; then
+            LAST_PROFILES_CHANGE=$(git log -1 --format=%H -- data/profiles.json)
+            if git merge-base --is-ancestor "$LAST_PROFILES_CHANGE" "$LAST_BOT_COMMIT" 2>/dev/null; then
+              echo "Profiles unchanged since last bot tick ($LAST_BOT_COMMIT). Skipping LLM call."
+              echo "ok=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          echo "New profile activity since last tick. Running."
+          echo "ok=true" >> "$GITHUB_OUTPUT"
 
       - name: Snapshot output before tick
         id: before
