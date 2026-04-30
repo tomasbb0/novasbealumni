@@ -14,7 +14,7 @@ export function NMark({
   color = "currentColor",
   variant = "badge",
 }: Props) {
-  const stroke = 8;
+  const stroke = 14;
 
   if (variant === "ring") {
     return (
@@ -56,7 +56,7 @@ export function NMark({
     );
   }
 
-  // badge: ring + N inside
+  // badge: heavy ring only (N removed)
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -74,12 +74,6 @@ export function NMark({
         stroke={color}
         strokeWidth={stroke}
       />
-      <g transform="translate(31 31) scale(1.02)">
-        <path
-          fill={color}
-          d="M27.5 0v22.02L9.69 0H0v37.52h9.69V15.5l17.81 22.02h9.69V0z"
-        />
-      </g>
     </svg>
   );
 }
