@@ -65,29 +65,34 @@ export function NovaLogo({
       )}
 
       <style jsx global>{`
-        @keyframes nlN { 0%,5%,6%,10%,11%,15% { opacity: 0; } 16%,20% { opacity: 1; } 21%,25% { opacity: 0; } 26%,100% { opacity: 1; } }
-        @keyframes nlCircle { 0% { transform: translate3d(0,-70px,0); opacity: 1; } 30% { transform: translate3d(0,0,0); } 31%,100% { opacity: 1; } }
-        @keyframes nlV { 0%,5% { opacity: 0; } 6%,10%,11%,15% { opacity: 1; } 16%,20%,21%,25%,26%,30% { opacity: 0; } 31%,100% { opacity: 1; } }
-        @keyframes nlA { 0%,5% { opacity: 1; } 6%,10% { opacity: 0; } 11%,15% { opacity: 1; } 16%,20% { opacity: 0; } 21%,25%,26%,100% { opacity: 1; } }
-        @keyframes nlSig { 0% { opacity: 0; } 100% { opacity: 1; } }
-        .nova-logo-animate .nl-N,
-        .nova-logo-animate .nl-V,
-        .nova-logo-animate .nl-A,
-        .nova-logo-animate .nl-circle {
-          opacity: 0;
-          animation-iteration-count: 1;
-          animation-direction: normal;
-          animation-timing-function: ease-in;
-          animation-fill-mode: forwards;
-          animation-duration: 6s;
+        @keyframes nlDrop {
+          0%   { transform: translate3d(0, -70px, 0); }
+          40%  { transform: translate3d(0, 0, 0); }
+          55%  { transform: translate3d(0, -28%, 0); }
+          70%  { transform: translate3d(0, 0, 0); }
+          82%  { transform: translate3d(0, -10%, 0); }
+          92%  { transform: translate3d(0, 0, 0); }
+          97%  { transform: translate3d(0, -3%, 0); }
+          100% { transform: translate3d(0, 0, 0); }
         }
-        .nova-logo-animate .nl-N { animation-name: nlN; }
-        .nova-logo-animate .nl-circle { animation-name: nlCircle; }
-        .nova-logo-animate .nl-V { animation-name: nlV; }
-        .nova-logo-animate .nl-A { animation-name: nlA; }
+        @keyframes nlDash {
+          0%,40% { transform: scaleX(0.42); }
+          70%    { transform: scaleX(0.78); }
+          92%    { transform: scaleX(0.96); }
+          100%   { transform: scaleX(1); }
+        }
+        @keyframes nlSig { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+        .nova-logo-animate .nl-cd-circle {
+          animation: nlDrop 2.4s cubic-bezier(.55,.08,.4,1) 0s 1 forwards;
+        }
+        .nova-logo-animate .nl-cd-dash {
+          transform: scaleX(0.42);
+          animation: nlDash 2.4s cubic-bezier(.4,.1,.3,1) 0s 1 forwards;
+        }
         .nova-logo-animate .nl-sig {
           opacity: 0;
-          animation: nlSig 0.7s ease-in 1s forwards;
+          animation: nlSig 0.7s ease-in 1.6s forwards;
         }
       `}</style>
     </span>
