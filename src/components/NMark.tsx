@@ -3,6 +3,7 @@ type Props = {
   className?: string;
   color?: string;
   variant?: "ring" | "n" | "badge";
+  strokeWidth?: number;
 };
 
 // "ring": just the heavy black circle outline (Nova SBE "on" badge style)
@@ -13,8 +14,9 @@ export function NMark({
   className,
   color = "currentColor",
   variant = "badge",
+  strokeWidth,
 }: Props) {
-  const stroke = 14;
+  const stroke = strokeWidth ?? 14;
 
   if (variant === "ring") {
     return (

@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-6 py-12 flex flex-col sm:flex-row gap-8 sm:items-start sm:justify-between text-sm text-[color:var(--muted)]">
         <div>
           <div className="flex items-center gap-2 text-[color:var(--foreground)]">
-            <NMark size={22} className="text-black" />
+            <NMark size={22} strokeWidth={26} className="text-black" />
             <span className="font-serif text-base">{brand.name}</span>
           </div>
           <div className="mt-2 max-w-sm">
