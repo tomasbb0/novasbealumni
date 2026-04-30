@@ -1,0 +1,170 @@
+name: 24/7 Alumni Networker Agent
+
+# The free zero-infra path: this workflow IS the agent.
+# GitHub Actions on a public repo gives you unlimited free minutes.
+# The agent runs every 6 hours, reads data/profiles.json, asks Copilot CLI
+# (Claude Haiku 4.5) to draft any high signal connections, validates the
+# JSON, and commits + pushes back. The push triggers deploy.yml which
+# rebuilds the static /connections dashboard on GitHub Pages.
+#
+# REQUIRED REPO SECRET:
+#   GH_PAT_COPILOT  fine-grained PAT from a GitHub account with an
+#                   active Copilot subscription. Permissions:
+#                     - Contents: Read and write (this repo)
+#                     - Workflows: Read and write (this repo)
+#                   We use this PAT both for Copilot auth AND for the
+#                   git push, because a push authored with PAT triggers
+#                   downstream workflows (the default GITHUB_TOKEN does
+#                   not, which would break the deploy.yml chain).
+#
+# If GH_PAT_COPILOT is missing, the job exits cleanly with a friendly
+# message (no scary red X every 6 hours).
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      effort:
+        description: "Reasoning effort"
+        required: false
+        default: "low"
+        type: choice
+        options: [low, medium, high]
+      force:
+        description: "Force a tick even if profiles unchanged"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alumni-agent
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    env:
+      MODEL_ID: claude-haiku-4.5
+      EFFORT: ${{ inputs.effort || 'low' }}
+      FORCE: ${{ inputs.force || 'false' }}
+    steps:
+      - name: Check secret is configured
+        id: secretcheck
+        env:
+          PAT: ${{ secrets.GH_PAT_COPILOT }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "::warning::GH_PAT_COPILOT secret is not set. Skipping tick. See ops/README.md for setup."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.secretcheck.outputs.configured == 'true'
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GH_PAT_COPILOT }}
+
+      - uses: actions/setup-node@v4
+        if: steps.secretcheck.outputs.configured == 'true'
+        with:
+          node-version: 20
+
+      - name: Install GitHub Copilot CLI
+        if: steps.secretcheck.outputs.configured == 'true'
+        run: npm install -g @github/copilot
+
+      - name: Verify CLI
+        if: steps.secretcheck.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_COPILOT }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_COPILOT }}
+        run: |
+          copilot --version
+          which copilot
+
+      - name: Short-circuit if not enough profiles
+        id: gate
+        if: steps.secretcheck.outputs.configured == 'true'
+        run: |
+          PROFILE_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/profiles.json','utf8')).length)")
+          echo "count=$PROFILE_COUNT" >> "$GITHUB_OUTPUT"
+          if [ "$PROFILE_COUNT" -lt 2 ]; then
+            echo "Only $PROFILE_COUNT profile(s). Need at least 2 to match. Skipping LLM call."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Snapshot output before tick
+        id: before
+        if: steps.secretcheck.outputs.configured == 'true' && steps.gate.outputs.ok == 'true'
+        run: |
+          BEFORE_HASH=$(sha256sum data/proposed-connections.json | cut -d' ' -f1)
+          echo "hash=$BEFORE_HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Run networker agent tick
+        if: steps.secretcheck.outputs.configured == 'true' && steps.gate.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_COPILOT }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_COPILOT }}
+        run: |
+          PROMPT_BODY=$(cat .github/agent-prompts/networker.md)
+          copilot \
+            --model "$MODEL_ID" \
+            --effort "$EFFORT" \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-banner \
+            -p "$PROMPT_BODY" \
+            2>&1 | tee agent-tick.log
+
+      - name: Validate output JSON
+        if: steps.secretcheck.outputs.configured == 'true' && steps.gate.outputs.ok == 'true'
+        run: |
+          node -e "
+            const arr = JSON.parse(require('fs').readFileSync('data/proposed-connections.json','utf8'));
+            if (!Array.isArray(arr)) { console.error('Not an array'); process.exit(1); }
+            const required = ['id','alumni_a_id','alumni_b_id','opportunity_type','synergy_summary','suggested_intro_message','confidence','signals','generated_at','generated_by_model','status'];
+            for (const c of arr) {
+              for (const k of required) if (!(k in c)) { console.error('Missing field', k, 'in', c.id || '(no id)'); process.exit(1); }
+            }
+            console.log('OK,', arr.length, 'total proposed connections.');
+          "
+
+      - name: Detect changes
+        id: diff
+        if: steps.secretcheck.outputs.configured == 'true' && steps.gate.outputs.ok == 'true'
+        run: |
+          AFTER_HASH=$(sha256sum data/proposed-connections.json | cut -d' ' -f1)
+          if [ "$AFTER_HASH" != "${{ steps.before.outputs.hash }}" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            BEFORE_COUNT=$(git show HEAD:data/proposed-connections.json | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).length))")
+            AFTER_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/proposed-connections.json','utf8')).length)")
+            echo "new=$((AFTER_COUNT - BEFORE_COUNT))" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push
+        if: steps.secretcheck.outputs.configured == 'true' && steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "nova-networker-bot"
+          git config user.email "bot@novasbealumni.com"
+          git add data/proposed-connections.json
+          git commit -m "feat(connections): ${{ steps.diff.outputs.new }} new proposed connection(s) from 24/7 networker"
+          git push
+
+      - name: Upload tick log
+        if: always() && steps.secretcheck.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-tick-log-${{ github.run_id }}
+          path: agent-tick.log
+          retention-days: 14
+          if-no-files-found: ignore

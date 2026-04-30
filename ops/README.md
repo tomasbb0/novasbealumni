@@ -1,8 +1,66 @@
-# Running the 24/7 agent on a VPS
+# Running the 24/7 agent
 
-The Nova SBE alumni networker is a tiny systemd unit that wakes up every 15 minutes, checks if there are new alumni profiles to look at, and if so asks GitHub Copilot CLI (Claude Haiku 4.5) to draft any high signal connections it finds. New proposals get pushed back to the repo, which triggers GitHub Pages to rebuild the `/connections` dashboard. Total runtime infra: one cheap (or free) Linux box.
+You have two ways to run this. Pick one. They both work, they both end with the agent posting proposed connections to `/connections`.
 
-## Recommended host
+| Path | Cost | Latency | Setup time |
+|------|------|---------|------------|
+| **GitHub Actions** (default) | €0 forever | new proposals every 6h | 5 minutes |
+| **VPS** (upgrade) | €0 if you can grab Oracle Always Free, else ~€5/mo on Hetzner | new proposals every 15 min | 30 minutes plus Oracle waiting |
+
+Start with GitHub Actions. Move to a VPS later if you want tighter loops or you want to run more aggressive models.
+
+---
+
+## Option A: GitHub Actions (zero infra, zero money)
+
+The agent lives in `.github/workflows/alumni-agent.yml`. It already runs on a 6-hour cron and on manual dispatch from the Actions tab. The only thing you need to do is create one secret.
+
+### One-time setup
+
+1. **Generate a fine-grained Personal Access Token** with your Copilot-subscribed GitHub account.
+   - Go to https://github.com/settings/personal-access-tokens
+   - Click "Generate new token", pick "Fine-grained token"
+   - Repository access: only `tomasbb0/novasbealumni`
+   - Permissions:
+     - Contents: **Read and write**
+     - Workflows: **Read and write**
+   - Expiration: pick whatever you're comfortable with (90 days, 1 year, no expiration)
+   - Generate, copy the token (starts with `github_pat_...`).
+
+2. **Add it as a repo secret**:
+   - Go to https://github.com/tomasbb0/novasbealumni/settings/secrets/actions
+   - Click "New repository secret"
+   - Name: `GH_PAT_COPILOT`
+   - Value: paste the token
+   - Save.
+
+3. **Test it now** without waiting 6 hours:
+   - Go to https://github.com/tomasbb0/novasbealumni/actions/workflows/alumni-agent.yml
+   - Click "Run workflow" → "Run workflow" (use defaults).
+   - Watch it run. Should complete in 1 to 2 minutes.
+
+That's it. The agent now ticks every 6 hours forever on GitHub's free CI runners.
+
+### Why we need a PAT and not the default `GITHUB_TOKEN`
+
+Two reasons.
+
+1. The Copilot CLI needs an OAuth-capable token; the workflow's auto-issued `GITHUB_TOKEN` is not associated with a Copilot subscription.
+2. Pushes authored with `GITHUB_TOKEN` do **not** trigger downstream workflows by design (anti-loop safety). We need `deploy.yml` to fire when the agent pushes, so we use a real PAT.
+
+### Cost on GitHub's side
+
+Public repo on GitHub Actions = unlimited free minutes. Each tick takes 1 to 2 minutes of compute. Even at 4 ticks per day, every day, forever, you owe nothing.
+
+Each tick that actually invokes Copilot consumes one request from your Copilot subscription's monthly request budget. The Haiku model is cheap. With the "skip if profiles unchanged" check baked into the workflow, a quiet week costs you a handful of requests, not 28.
+
+---
+
+## Option B: VPS (upgrade path, every 15 min)
+
+When you want tighter loops than 6h, or you want to keep the agent running on a model with higher request cost, move to a VPS.
+
+### Recommended host
 
 **Use Oracle Cloud Always Free**. The Ampere A1 ARM shape (4 vCPU, 24GB RAM) is free forever, no credit card charges, plenty for this agent. The install script below works fine on ARM (Node.js and the Copilot CLI both have arm64 builds).
 
@@ -27,7 +85,7 @@ The annoying part is getting one. Oracle's free Ampere capacity is famously "out
 
 In all cases pick **Ubuntu 24.04 LTS**.
 
-## Install
+## Install on the VPS
 
 SSH into the VPS as root (or a sudoer), then:
 
