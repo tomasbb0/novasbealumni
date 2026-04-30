@@ -6,8 +6,8 @@ export function SiteNav() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
       <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-end gap-3 group text-black" aria-label={brand.name}>
-          <NovaLogo size={22} showSignature animate />
+        <Link href="/" className="flex items-end gap-3 group text-black shrink-0" aria-label={brand.name}>
+          <NovaLogo size={20} showSignature={false} animate />
           <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)] mb-1" />
           <span className="hidden sm:inline-block font-serif text-sm tracking-tight text-[color:var(--muted)] mb-0.5">
             Alumni
