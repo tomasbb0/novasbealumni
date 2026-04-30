@@ -34,7 +34,7 @@ export default function PitchPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-20">
       <header className="mb-16">
-        <div className="text-xs uppercase tracking-widest text-[color:var(--accent)]">
+        <div className="text-xs uppercase tracking-widest text-[color:var(--primary)]">
           {brand.name} · for partners
         </div>
         <h1 className="mt-3 text-4xl sm:text-5xl font-semibold tracking-tight">
@@ -51,7 +51,7 @@ export default function PitchPage() {
             key={s.kicker}
             className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--card)] p-10 sm:p-14"
           >
-            <div className="text-xs uppercase tracking-widest text-[color:var(--accent)]">
+            <div className="text-xs uppercase tracking-widest text-[color:var(--primary)]">
               {s.kicker}
             </div>
             <h2 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">
@@ -68,7 +68,7 @@ export default function PitchPage() {
         <p className="text-[color:var(--muted)]">Reach out:</p>
         <a
           href={`mailto:${brand.contactEmail}`}
-          className="mt-2 inline-block text-2xl font-medium text-[color:var(--accent)] hover:underline"
+          className="mt-2 inline-block text-2xl font-medium text-[color:var(--primary)] hover:underline"
         >
           {brand.contactEmail}
         </a>

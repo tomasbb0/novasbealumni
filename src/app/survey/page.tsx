@@ -6,7 +6,7 @@ export default function SurveyPage() {
   const isPlaceholder = brand.surveyUrl.includes("REPLACE_ME");
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">
-      <div className="text-xs uppercase tracking-widest text-[color:var(--accent)]">
+      <div className="text-xs uppercase tracking-widest text-[color:var(--primary)]">
         2 minutes, no signup
       </div>
       <h1 className="mt-3 text-4xl sm:text-5xl font-semibold tracking-tight">
@@ -27,7 +27,7 @@ export default function SurveyPage() {
               In the meantime, write us at{" "}
               <a
                 href={`mailto:${brand.contactEmail}`}
-                className="text-[color:var(--accent)] hover:underline"
+                className="text-[color:var(--primary)] hover:underline"
               >
                 {brand.contactEmail}
               </a>

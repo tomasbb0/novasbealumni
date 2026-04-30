@@ -1,0 +1,23 @@
+[    2270ms] [ERROR] Attestation check for Attribution Reporting on https://www.facebook.com failed. @ https://www.novasbe.unl.pt/en/:0
+[    3094ms] TypeError: Cannot set properties of null (setting 'value')
+    at <anonymous>:1:102
+    at https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:1023:429
+    at SQ (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:1025:31)
+    at Jd.RQ (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:1022:92)
+    at Jd.<anonymous> (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:403:187)
+    at k.apply (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:329:466)
+    at gb (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:292:719)
+    at fb (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:292:470)
+    at Jd.<anonymous> (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:353:473)
+    at k.apply (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:329:466)
+[    3099ms] TypeError: Cannot set properties of null (setting 'value')
+    at <anonymous>:1:138
+    at https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:1023:429
+    at SQ (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:1025:31)
+    at Jd.RQ (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:1022:92)
+    at Jd.<anonymous> (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:403:187)
+    at k.apply (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:329:466)
+    at gb (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:292:719)
+    at fb (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:292:470)
+    at Jd.<anonymous> (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:353:473)
+    at k.apply (https://www.googletagmanager.com/gtm.js?id=GTM-MBCXR95:329:466)

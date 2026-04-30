@@ -43,8 +43,8 @@ export function RsvpForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-2xl border border-[color:var(--accent)] bg-[color:var(--card)] p-8">
-        <div className="text-[color:var(--accent)] text-xs uppercase tracking-widest">
+      <div className="rounded-2xl border border-[color:var(--primary)] bg-[color:var(--card)] p-8">
+        <div className="text-[color:var(--primary)] text-xs uppercase tracking-widest">
           You&apos;re in
         </div>
         <h2 className="mt-2 text-2xl font-semibold">See you in NY.</h2>
@@ -56,7 +56,7 @@ export function RsvpForm() {
           href={brand.whatsappInviteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center rounded-full bg-[color:var(--accent)] px-6 py-3 text-sm font-medium text-[#0b0b0d] hover:bg-[color:var(--accent-soft)] transition"
+          className="mt-6 inline-flex items-center rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-medium text-[#ffffff] hover:bg-[color:var(--primary-700)] transition"
         >
           Join the WhatsApp group →
         </a>
@@ -86,7 +86,7 @@ export function RsvpForm() {
           ].map((o) => (
             <label
               key={o.v}
-              className="cursor-pointer rounded-full border border-[color:var(--border)] px-4 py-2 text-sm hover:border-[color:var(--accent)] has-[:checked]:bg-[color:var(--accent)] has-[:checked]:text-[#0b0b0d] has-[:checked]:border-[color:var(--accent)] transition"
+              className="cursor-pointer rounded-full border border-[color:var(--border)] px-4 py-2 text-sm hover:border-[color:var(--primary)] has-[:checked]:bg-[color:var(--primary)] has-[:checked]:text-[#ffffff] has-[:checked]:border-[color:var(--primary)] transition"
             >
               <input
                 type="radio"
@@ -106,7 +106,7 @@ export function RsvpForm() {
         <textarea
           name="notes"
           rows={3}
-          className="mt-2 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 text-sm focus:border-[color:var(--accent)] outline-none transition"
+          className="mt-2 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 text-sm focus:border-[color:var(--primary)] outline-none transition"
           placeholder="What you're hoping to get from this, who you'd love to meet, etc."
         />
       </div>
@@ -120,7 +120,7 @@ export function RsvpForm() {
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="inline-flex items-center rounded-full bg-[color:var(--accent)] px-6 py-3 text-sm font-medium text-[#0b0b0d] hover:bg-[color:var(--accent-soft)] disabled:opacity-60 disabled:cursor-not-allowed transition"
+        className="inline-flex items-center rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-medium text-[#ffffff] hover:bg-[color:var(--primary-700)] disabled:opacity-60 disabled:cursor-not-allowed transition"
       >
         {status === "submitting" ? "Sending…" : "Send RSVP"}
       </button>
@@ -148,14 +148,14 @@ function Field(props: {
     <div>
       <Label>
         {props.label}
-        {props.required && <span className="text-[color:var(--accent)]"> *</span>}
+        {props.required && <span className="text-[color:var(--primary)]"> *</span>}
       </Label>
       <input
         name={props.name}
         type={props.type || "text"}
         required={props.required}
         placeholder={props.placeholder}
-        className="mt-2 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 text-sm focus:border-[color:var(--accent)] outline-none transition"
+        className="mt-2 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 text-sm focus:border-[color:var(--primary)] outline-none transition"
       />
     </div>
   );
