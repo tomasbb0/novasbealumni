@@ -18,6 +18,7 @@ export function SiteNav() {
           <Link href="/connections" className="hover:text-[color:var(--primary)] transition">Connections</Link>
           <Link href="/agent" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Agent</Link>
           <Link href="/pitch" className="hover:text-[color:var(--primary)] transition hidden sm:inline">For partners</Link>
+          <Link href="/signin" className="hover:text-[color:var(--primary)] transition">Sign in</Link>
           <Link
             href="/onboard"
             className="ml-2 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition"

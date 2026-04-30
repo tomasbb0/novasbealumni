@@ -5,6 +5,7 @@ import { brand } from "@/lib/brand";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DemoBanner } from "@/components/DemoBanner";
+import { AuthProvider } from "@/lib/auth";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -45,10 +46,12 @@ export default function RootLayout({
       className={`${playfair.variable} ${openSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <DemoBanner />
-        <SiteNav />
-        <main className="flex-1 flex flex-col">{children}</main>
-        <SiteFooter />
+        <AuthProvider>
+          <DemoBanner />
+          <SiteNav />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <SiteFooter />
+        </AuthProvider>
       </body>
     </html>
   );
