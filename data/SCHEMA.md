@@ -2,11 +2,21 @@
 
 This folder is the contract between three parties.
 
-1. The in-app onboarding agent (`/onboard`) writes new alumni into `profiles.json`.
-2. The in-app 24/7 OpenClaw connection agent reads `profiles.json` and appends to `proposed-connections.json`. It also emits activity events into `agent-activity.json`.
+1. The onboarding flow (`/onboard`, owned by sibling agent) writes new alumni into `profiles.json`.
+2. The 24/7 networker agent runs as a GitHub Actions cron (`.github/workflows/alumni-agent.yml`, owned by this agent). It reads `profiles.json` and appends to `proposed-connections.json`. It may also emit activity events into `agent-activity.json`.
 3. The static dashboards (`/connections`, `/alumni/[id]`, `/agent`, `/admin`) read these files at build time.
 
-Both writes happen via the sibling in-app agent. This frontend repo only reads. A push to `main` rebuilds the static site on GitHub Pages.
+A push to `main` rebuilds the static site on GitHub Pages.
+
+## Ownership boundary (do not cross)
+
+To prevent the two agents from clobbering each other:
+
+- **Sibling agent owns**: `src/app/onboard/**`, `src/app/agent/**`, `src/app/admin/**`, `src/app/alumni/[id]/**`, `src/lib/activity.ts`, the `/onboard` chat backend (wherever it lives), and writes to `data/profiles.json`.
+- **This agent owns**: `.github/workflows/alumni-agent.yml`, `.github/agent-prompts/networker.md`, `ops/**`, `src/app/connections/**`, `src/lib/connections.ts`, and writes to `data/proposed-connections.json`.
+- **Shared**: `data/SCHEMA.md`, `data/agent-activity.json`. Edits must be additive (new fields, new event kinds), never remove fields the other side reads.
+
+Neither agent deletes the other's files. If the architecture needs to change, propose it through the user, not unilaterally.
 
 If you change a field, update this file and the TS types in `src/lib/connections.ts` in the same commit.
 
