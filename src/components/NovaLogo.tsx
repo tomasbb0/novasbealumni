@@ -25,11 +25,25 @@ export function NovaLogo({
   const [animClass] = useState(animate ? "nova-logo-animate" : "");
   const circle = Math.round(size * 0.93); // O diameter relative to letter height
   const sigH = Math.max(12, Math.round(size * 0.64));
+  const dashFinalWidth = circle * 2.97;
+  const dashStartScale = 0.32;
+  const vaShrink = Math.round(dashFinalWidth * (1 - dashStartScale));
+  const ballShiftX = Math.round((dashFinalWidth * (1 - dashStartScale)) / 2);
+  const fallDistance = Math.round(size * 2.5);
+  const compress = Math.round(size * 0.5);
 
   return (
     <span
       className={`inline-flex items-end gap-0 ${animClass} ${className ?? ""}`}
-      style={{ lineHeight: 0 }}
+      style={
+        {
+          lineHeight: 0,
+          ["--nl-va-shrink" as string]: `${vaShrink}px`,
+          ["--nl-ball-x" as string]: `${ballShiftX}px`,
+          ["--nl-fall" as string]: `${fallDistance}px`,
+          ["--nl-compress" as string]: `${compress}px`,
+        } as React.CSSProperties
+      }
       aria-label="Nova SBE Alumni"
     >
       <span className="nl-N" style={{ display: "inline-block", marginRight: size * 0.22 }}>
@@ -37,17 +51,17 @@ export function NovaLogo({
       </span>
 
       <span className="nl-group" style={{ display: "inline-block" }}>
-        <span className="nl-circle" style={{ display: "inline-block" }}>
-          <NovaCircleDash size={circle} color="currentColor" />
+        <NovaCircleDash size={circle} color="currentColor" />
+      </span>
+
+      <span className="nl-va" style={{ display: "inline-flex", alignItems: "flex-end" }}>
+        <span className="nl-V" style={{ display: "inline-block", marginLeft: size * 0.05 }}>
+          <img src="/brand/novasbe-V.svg" alt="" height={size} style={{ height: size, width: "auto", display: "block" }} />
         </span>
-      </span>
 
-      <span className="nl-V" style={{ display: "inline-block", marginLeft: size * 0.05 }}>
-        <img src="/brand/novasbe-V.svg" alt="" height={size} style={{ height: size, width: "auto", display: "block" }} />
-      </span>
-
-      <span className="nl-A" style={{ display: "inline-block", marginLeft: -size * 0.18, marginRight: size * 0.22 }}>
-        <img src="/brand/novasbe-A.svg" alt="" height={size} style={{ height: size, width: "auto", display: "block" }} />
+        <span className="nl-A" style={{ display: "inline-block", marginLeft: -size * 0.18, marginRight: size * 0.22 }}>
+          <img src="/brand/novasbe-A.svg" alt="" height={size} style={{ height: size, width: "auto", display: "block" }} />
+        </span>
       </span>
 
       {showSignature && (
@@ -65,34 +79,47 @@ export function NovaLogo({
       )}
 
       <style jsx global>{`
-        @keyframes nlDrop {
-          0%   { transform: translate3d(0, -70px, 0); }
-          40%  { transform: translate3d(0, 0, 0); }
-          55%  { transform: translate3d(0, -28%, 0); }
-          70%  { transform: translate3d(0, 0, 0); }
-          82%  { transform: translate3d(0, -10%, 0); }
-          92%  { transform: translate3d(0, 0, 0); }
-          97%  { transform: translate3d(0, -3%, 0); }
-          100% { transform: translate3d(0, 0, 0); }
+        @keyframes nlFall {
+          0%   { transform: translateY(calc(var(--nl-fall) * -1)); }
+          100% { transform: translateY(0); }
         }
-        @keyframes nlDash {
-          0%,40% { transform: scaleX(0.42); }
-          70%    { transform: scaleX(0.78); }
-          92%    { transform: scaleX(0.96); }
-          100%   { transform: scaleX(1); }
+        @keyframes nlBounceUp {
+          0%   { transform: translate(calc(var(--nl-ball-x) * -1), var(--nl-compress)); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes nlDashGrow {
+          0%   { transform: scaleX(0.32); }
+          100% { transform: scaleX(1); }
+        }
+        @keyframes nlVADrag {
+          0%   { transform: translateX(calc(var(--nl-va-shrink) * -1)); }
+          100% { transform: translateX(0); }
         }
         @keyframes nlSig { 0% { opacity: 0; } 100% { opacity: 1; } }
 
-        .nova-logo-animate .nl-cd-circle {
-          animation: nlDrop 2.4s cubic-bezier(.55,.08,.4,1) 0s 1 forwards;
+        /* Phase 1 (0-0.6s): ball+dash unit falls together from above. */
+        .nova-logo-animate .nl-group {
+          animation: nlFall 0.6s cubic-bezier(.45,.05,.6,1) 0s 1 forwards;
         }
+        /* Ball starts compressed (below resting), then rises to natural top-of-dash position once. */
+        .nova-logo-animate .nl-cd-circle {
+          transform: translate(calc(var(--nl-ball-x) * -1), var(--nl-compress));
+          animation: nlBounceUp 0.9s cubic-bezier(.25,.7,.35,1) 0.6s 1 forwards;
+        }
+        /* Dash grows rightward in sync with the ball rising. */
         .nova-logo-animate .nl-cd-dash {
-          transform: scaleX(0.42);
-          animation: nlDash 2.4s cubic-bezier(.4,.1,.3,1) 0s 1 forwards;
+          transform-origin: left center;
+          transform: scaleX(0.32);
+          animation: nlDashGrow 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
+        }
+        /* V+A get dragged right as the dash extends. */
+        .nova-logo-animate .nl-va {
+          transform: translateX(calc(var(--nl-va-shrink) * -1));
+          animation: nlVADrag 0.9s cubic-bezier(.3,.6,.4,1) 0.6s 1 forwards;
         }
         .nova-logo-animate .nl-sig {
           opacity: 0;
-          animation: nlSig 0.7s ease-in 1.6s forwards;
+          animation: nlSig 0.6s ease-in 1.5s forwards;
         }
       `}</style>
     </span>
