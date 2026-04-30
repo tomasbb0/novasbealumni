@@ -44,7 +44,6 @@ export function NovaCircleDash({ size = 36, dashScale = 0.7, className, color = 
           bottom: 0,
           height: dash,
           background: color,
-          transformOrigin: "center",
         }}
       />
     </span>
