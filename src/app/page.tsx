@@ -9,20 +9,22 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-[color:var(--border)]">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(84,28,101,0.10),_transparent_55%)]" />
-        {/* Giant Nova circle: positioned so its centre is the bottom-right corner of the hero,
-            so only the top-left quarter is visible bleeding in from the right edge. */}
-        <img
-          src="/brand/novasbe-circle.svg"
-          alt=""
+        {/* Giant Nova ring: positioned so its centre is past the bottom-right corner of the
+            hero, so only the top-left quarter bleeds in. Same circle as the small one, just
+            inline so we can tune stroke thickness. */}
+        <svg
+          viewBox="0 0 100 100"
           aria-hidden
           className="hidden lg:block pointer-events-none select-none absolute"
           style={{
             width: "min(110vh, 1100px)",
             height: "min(110vh, 1100px)",
-            right: "calc(min(110vh, 1100px) / -2)",
-            bottom: "calc(min(110vh, 1100px) / -2)",
+            right: "calc(min(110vh, 1100px) / -2 + min(110vh, 1100px) * 0.118)",
+            bottom: "calc(min(110vh, 1100px) / -2 + min(110vh, 1100px) * 0.118)",
           }}
-        />
+        >
+          <circle cx="50" cy="50" r="39.05" fill="none" stroke="#030403" strokeWidth="18.9" />
+        </svg>
         <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32 relative">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white px-3 py-1 text-xs uppercase tracking-widest text-[color:var(--primary)]">
