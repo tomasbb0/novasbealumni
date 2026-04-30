@@ -4,13 +4,28 @@ The Nova SBE alumni networker is a tiny systemd unit that wakes up every 15 minu
 
 ## Recommended host
 
-**Default recommendation: Hetzner CX22**. €4.59 a month, 2 vCPU, 4GB RAM, Ubuntu 24.04. Pay by the hour, kill any time, no surprises. For a 24/7 alumni community agent, paying €5/mo to own the relationship beats fighting Oracle's quota system.
+**Use Oracle Cloud Always Free**. The Ampere A1 ARM shape (4 vCPU, 24GB RAM) is free forever, no credit card charges, plenty for this agent. The install script below works fine on ARM (Node.js and the Copilot CLI both have arm64 builds).
 
-**If you really want free: Oracle Cloud Always Free**. The Ampere A1 ARM shape (4 vCPU, 24GB RAM) is free forever, but free Ampere capacity is often "out of stock" in EU regions. Expect to retry for a few hours. Acceptable if you treat the agent as best effort, less ideal for a service you actually care about.
+The annoying part is getting one. Oracle's free Ampere capacity is famously "out of stock" in popular regions. A practical playbook:
+
+1. Sign up at https://signup.cloud.oracle.com/. They ask for a credit card for ID verification only; they do not bill it as long as you stay inside the Always Free shapes.
+2. Pick a **home region** carefully — you can never change it. Avoid Frankfurt, Amsterdam, London (always full). Try **Marseille**, **Stockholm**, **Madrid**, **São Paulo**, **Mumbai**, or **Mexico City** first.
+3. Create a Compute instance: shape **VM.Standard.A1.Flex**, 4 OCPUs, 24 GB memory, image **Canonical Ubuntu 24.04**. Add your SSH public key.
+4. If you get **"Out of host capacity"**, do not wait. Open a small terminal loop on your laptop that retries every 60 seconds:
+   ```
+   while true; do
+     oci compute instance launch --from-json file://launch.json && break
+     sleep 60
+   done
+   ```
+   Or just refresh the web console manually a few times an hour. Most people get one within 24 to 48 hours of trying.
+5. Once you have the instance, open ports 22 (SSH) and the default outbound. Nothing inbound is needed beyond SSH.
+
+**Backup plan if Oracle never gives you a box**: Hetzner CX22 is €4.59/month, takes 30 seconds to provision, no capacity games. The same install script works on it identically.
 
 **Avoid**: AWS / GCP free tiers. They expire after 12 months and the bills get weird.
 
-In both cases pick **Ubuntu 24.04 LTS**.
+In all cases pick **Ubuntu 24.04 LTS**.
 
 ## Install
 
