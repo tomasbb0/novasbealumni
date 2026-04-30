@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  /* Nova SBE official segment palette — Alumni (#EB6012) per nova-sbe-brandbook-logo.pdf */
+  /* Nova SBE Alumni Club official orange — sampled from the segment swatch the user shared. */
   --background: #ffffff;
   --foreground: #000000;
   --muted: #6b6b6b;
   --border: #e5e5e5;
-  --card: #fdeee3;
-  --primary: #eb6012;
-  --primary-700: #b94a0d;
-  --primary-50: #fdeee3;
+  --card: #fbe9da;
+  --primary: #e2773f;
+  --primary-700: #b85e30;
+  --primary-50: #fbe9da;
   --accent: #033f85;
   --on-primary: #ffffff;
 }

@@ -51,7 +51,7 @@ export function NovaLogo({
           ["--nl-dash-end" as string]: `${dashEndScale}`,
         } as React.CSSProperties
       }
-      aria-label="Nova SBE Alumni"
+      aria-label="Nova SBE Alumni Club"
     >
       <span className="nl-N" style={{ display: "inline-block", marginRight: size * 0.22 }}>
         <img src="/brand/novasbe-N.svg" alt="" height={size} style={{ height: size, width: "auto", display: "block" }} />

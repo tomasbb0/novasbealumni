@@ -10,7 +10,7 @@ export function SiteNav() {
           <NovaLogo size={20} showSignature={false} animate />
           <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)] mb-1" />
           <span className="hidden sm:inline-block font-serif text-sm tracking-tight text-[color:var(--muted)] mb-0.5">
-            Alumni
+            Alumni Club
           </span>
         </Link>
         <div className="flex items-center gap-6 text-sm text-[color:var(--foreground)]">

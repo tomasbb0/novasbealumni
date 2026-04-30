@@ -10,7 +10,7 @@ export function SiteFooter() {
           <div className="flex items-center gap-3 text-[color:var(--foreground)]">
             <NovaSBEMark variant="wordmark" className="h-4 w-auto" />
             <span className="w-px h-4 bg-[color:var(--border)]" />
-            <span className="font-serif text-base">Alumni</span>
+            <span className="font-serif text-base">Alumni Club</span>
           </div>
           <div className="mt-3 max-w-sm">
             Unofficial alumni initiative. Not affiliated with {brand.school}. The Nova SBE wordmark is the property of its owner and is shown here for demo purposes only.
