@@ -8,8 +8,8 @@ export const brand = {
   school: "Nova School of Business and Economics",
   schoolShort: "Nova SBE",
   whatsappInviteUrl: "https://chat.whatsapp.com/REPLACE_ME",
-  tallyRsvpId: process.env.NEXT_PUBLIC_TALLY_RSVP_ID || "xX0e65",
-  tallySurveyId: process.env.NEXT_PUBLIC_TALLY_SURVEY_ID || "xX0e65",
+  tallyRsvpId: process.env.NEXT_PUBLIC_TALLY_RSVP_ID || "KYPq7D",
+  tallySurveyId: process.env.NEXT_PUBLIC_TALLY_SURVEY_ID || "KYPq7D",
   contactEmail: "hello@novasbealumni.com",
   siteUrl: "https://novasbealumni.com",
   firstEvent: {
