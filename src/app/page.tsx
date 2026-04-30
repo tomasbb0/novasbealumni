@@ -83,7 +83,7 @@ export default function Home() {
             href="/rsvp"
             className="relative inline-flex items-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[color:var(--primary)] hover:bg-[color:var(--primary-50)] transition self-start sm:self-auto"
           >
-
+            RSVP
           </Link>
         </div>
       </section>
