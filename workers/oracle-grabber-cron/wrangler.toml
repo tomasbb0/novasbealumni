@@ -1,0 +1,13 @@
+name = "oracle-grabber-cron"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+workers_dev = false
+
+# Fires every 5 minutes, server-side, reliably.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+GITHUB_OWNER = "tomasbb0"
+GITHUB_REPO = "novasbealumni"
+WORKFLOW_FILE = "oracle-arm-grabber.yml"
