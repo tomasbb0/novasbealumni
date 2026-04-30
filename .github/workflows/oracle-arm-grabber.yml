@@ -23,7 +23,9 @@ name: oracle-arm-grabber
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Every 10 min. Each run takes ~9 min, so this avoids the queue/cancel
+    # collisions we got with */5 (52 cancelled runs in the first 17h).
+    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       ocpus:
@@ -45,7 +47,7 @@ concurrency:
 jobs:
   grab:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - name: Install OCI CLI
         run: |
@@ -146,9 +148,9 @@ jobs:
           DISPLAY_NAME: ${{ vars.OCI_INSTANCE_NAME || 'alumni-agent' }}
         run: |
           set +e
-          # Loop for ~5.5 minutes, trying every AD with ~20s spacing.
-          # Job timeout is 8 min so we stay well within bounds.
-          end_ts=$(( $(date +%s) + 330 ))
+          # Loop for ~8.5 minutes (job timeout 10), trying every AD with ~15s
+          # spacing. This squeezes ~12-15 attempts per run instead of ~5.
+          end_ts=$(( $(date +%s) + 510 ))
           attempt=0
           ad_array=( $ADS )
           while [ "$(date +%s)" -lt "$end_ts" ]; do
