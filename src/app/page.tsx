@@ -16,7 +16,9 @@ export default function Home() {
               {brand.schoolShort} · {brand.city}
             </div>
             <h1 className="mt-6 font-serif text-5xl sm:text-6xl leading-[1.05] max-w-3xl text-[color:var(--foreground)] min-h-[10rem] sm:min-h-[12rem]">
-              The Nova SBE alumni community in <CityCycle className="text-[color:var(--primary)] whitespace-nowrap" />.
+              The Nova SBE alumni community
+              <br />
+              in <CityCycle className="text-[color:var(--primary)] whitespace-nowrap" />.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[color:var(--muted)] leading-relaxed">
               {brand.description}
