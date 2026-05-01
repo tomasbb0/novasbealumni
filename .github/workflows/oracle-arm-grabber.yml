@@ -102,8 +102,8 @@ jobs:
           echo "Current A1.Flex instances:"
           echo "$summary" | python3 -m json.tool 2>/dev/null || echo "$summary"
 
-          used_ocpu=$(echo "$summary" | jq '[.[].ocpus // 0] | add | floor // 0')
-          count=$(echo "$summary" | jq 'length // 0')
+          used_ocpu=$(echo "${summary:-[]}" | jq '([.[].ocpus // 0] | add // 0) | floor')
+          count=$(echo "${summary:-[]}" | jq 'length // 0')
           remaining=$(( TARGET_TOTAL_OCPU - used_ocpu ))
           echo ""
           echo "OCPUs used: $used_ocpu / $TARGET_TOTAL_OCPU"
@@ -194,7 +194,7 @@ jobs:
 
           # Loop for ~8.5 minutes (job timeout 10), trying every AD with ~15s
           # spacing. This squeezes ~15-20 attempts per run.
-          end_ts=$(( $(date +%s) + 510 ))
+          end_ts=$(( $(date +%s) + 420 ))
           attempt=0
           ad_array=( $ADS )
           landed_ids=""
