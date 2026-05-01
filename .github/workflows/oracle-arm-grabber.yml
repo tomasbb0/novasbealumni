@@ -232,7 +232,7 @@ jobs:
               attempt=$((attempt + 1))
               echo ""
               echo "=== Attempt $attempt | AD: $AD | name: $DISPLAY_NAME | $(date -u +%H:%M:%S) ==="
-              out=$(oci compute instance launch \
+              out=$(oci --no-retry compute instance launch \
                 --availability-domain "$AD" \
                 --compartment-id "$OCI_TENANCY_OCID" \
                 --shape "VM.Standard.A1.Flex" \
