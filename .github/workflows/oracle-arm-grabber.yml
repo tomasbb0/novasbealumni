@@ -105,15 +105,17 @@ jobs:
           used_ocpu=$(echo "${summary:-[]}" | jq '([.[].ocpus // 0] | add // 0) | floor')
           count=$(echo "${summary:-[]}" | jq 'length // 0')
           big_count=$(echo "${summary:-[]}" | jq '[.[] | select((.ocpus // 0) >= 2)] | length')
+          small_count=$(echo "${summary:-[]}" | jq '[.[] | select((.ocpus // 0) < 2)] | length')
           remaining=$(( TARGET_TOTAL_OCPU - used_ocpu ))
           echo ""
           echo "OCPUs used: $used_ocpu / $TARGET_TOTAL_OCPU"
           echo "OCPUs remaining: $remaining"
-          echo "Instance count: $count (big slots filled: $big_count)"
+          echo "Instance count: $count (small: $small_count, big: $big_count)"
           echo "used_ocpu=$used_ocpu" >> "$GITHUB_OUTPUT"
           echo "remaining_ocpu=$remaining" >> "$GITHUB_OUTPUT"
           echo "instance_count=$count" >> "$GITHUB_OUTPUT"
           echo "big_count=$big_count" >> "$GITHUB_OUTPUT"
+          echo "small_count=$small_count" >> "$GITHUB_OUTPUT"
 
           if [ "$remaining" -le 0 ]; then
             echo "quota_full=true" >> "$GITHUB_OUTPUT"
@@ -175,29 +177,33 @@ jobs:
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
           ADS: ${{ steps.ad.outputs.ads }}
           IMAGE_ID: ${{ steps.image.outputs.id }}
-          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '2' }}
-          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '12' }}
-          SMALL_OCPUS: ${{ vars.OCI_SMALL_OCPUS || '1' }}
-          SMALL_MEMORY: ${{ vars.OCI_SMALL_MEMORY || '6' }}
+          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '1' }}
+          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '6' }}
+          BIG_OCPUS: ${{ vars.OCI_BIG_OCPUS || '2' }}
+          BIG_MEMORY: ${{ vars.OCI_BIG_MEMORY || '12' }}
+          SMALL_TARGET: ${{ vars.OCI_SMALL_TARGET || '2' }}
           PREFIX: ${{ vars.OCI_INSTANCE_PREFIX || 'openclaw' }}
           REMAINING_OCPU: ${{ steps.precheck.outputs.remaining_ocpu }}
           INSTANCE_COUNT: ${{ steps.precheck.outputs.instance_count }}
           BIG_COUNT: ${{ steps.precheck.outputs.big_count }}
+          SMALL_COUNT: ${{ steps.precheck.outputs.small_count }}
         run: |
           set +e
-          # Mix strategy: ONE big slot (2 OCPU + 12 GB) + smaller slots
-          # (1 OCPU + 6 GB) until quota is full. If a big slot already
-          # exists from a prior run, skip straight to small.
-          if [ "$BIG_COUNT" -gt 0 ] || [ "$REMAINING_OCPU" -lt 2 ]; then
-            echo "Big slot already taken (or no room). Switching to small (${SMALL_OCPUS}/${SMALL_MEMORY})."
-            OCPUS="$SMALL_OCPUS"
-            MEMORY="$SMALL_MEMORY"
+          # Mix strategy (small first): land SMALL_TARGET small instances
+          # (default 2x 1 OCPU + 6 GB) then promote to BIG (2 OCPU + 12 GB)
+          # for the last slot. Smaller shapes have higher land rate, so we
+          # secure those first.
+          if [ "$SMALL_COUNT" -ge "$SMALL_TARGET" ] && [ "$REMAINING_OCPU" -ge "$BIG_OCPUS" ]; then
+            echo "Small target reached ($SMALL_COUNT/$SMALL_TARGET). Going big (${BIG_OCPUS}/${BIG_MEMORY})."
+            OCPUS="$BIG_OCPUS"
+            MEMORY="$BIG_MEMORY"
+          else
+            echo "Hunting small (${OCPUS}/${MEMORY}). Have $SMALL_COUNT/$SMALL_TARGET."
           fi
           # Cap the requested OCPUs at what's left in the quota for this run.
           if [ "$OCPUS" -gt "$REMAINING_OCPU" ]; then
             echo "Capping requested OCPUs $OCPUS → $REMAINING_OCPU (quota left)"
             OCPUS="$REMAINING_OCPU"
-            # Scale memory proportionally (quota is 6 GB per OCPU).
             MEMORY=$(( OCPUS * 6 ))
           fi
           # Pick next sequential name like openclaw-1, openclaw-2, ...
@@ -251,10 +257,19 @@ jobs:
                   fi
                   next_idx=$(( INSTANCE_COUNT + 1 ))
                   DISPLAY_NAME="${PREFIX}-${next_idx}"
-                  # After landing one (especially the big slot), all
-                  # subsequent instances in this run go to small.
-                  OCPUS="$SMALL_OCPUS"
-                  MEMORY="$SMALL_MEMORY"
+                  # Update small/big counters for this run so we know when
+                  # to promote to the big shape.
+                  if [ "$OCPUS" -lt 2 ]; then
+                    SMALL_COUNT=$(( SMALL_COUNT + 1 ))
+                  else
+                    BIG_COUNT=$(( BIG_COUNT + 1 ))
+                  fi
+                  # Pick next shape: stay small until target met, then big.
+                  if [ "$SMALL_COUNT" -ge "$SMALL_TARGET" ] && [ "$REMAINING_OCPU" -ge "$BIG_OCPUS" ]; then
+                    OCPUS="$BIG_OCPUS"; MEMORY="$BIG_MEMORY"
+                  else
+                    OCPUS=1; MEMORY=6
+                  fi
                   if [ "$OCPUS" -gt "$REMAINING_OCPU" ]; then
                     OCPUS="$REMAINING_OCPU"
                     MEMORY=$(( OCPUS * 6 ))
