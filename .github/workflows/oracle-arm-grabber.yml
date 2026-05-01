@@ -102,10 +102,19 @@ jobs:
           echo "Current A1.Flex instances:"
           echo "$summary" | python3 -m json.tool 2>/dev/null || echo "$summary"
 
-          used_ocpu=$(echo "${summary:-[]}" | jq '([.[].ocpus // 0] | add // 0) | floor')
-          count=$(echo "${summary:-[]}" | jq 'length // 0')
-          big_count=$(echo "${summary:-[]}" | jq '[.[] | select((.ocpus // 0) >= 2)] | length')
-          small_count=$(echo "${summary:-[]}" | jq '[.[] | select((.ocpus // 0) < 2)] | length')
+          # oci returns "" or "\n" when nothing matches. Normalise to [].
+          if ! echo "$summary" | jq -e . >/dev/null 2>&1; then
+            summary='[]'
+          fi
+          used_ocpu=$(echo "$summary" | jq '([.[].ocpus // 0] | add // 0) | floor')
+          count=$(echo "$summary" | jq 'length // 0')
+          big_count=$(echo "$summary" | jq '[.[] | select((.ocpus // 0) >= 2)] | length')
+          small_count=$(echo "$summary" | jq '[.[] | select((.ocpus // 0) < 2)] | length')
+          # Belt-and-braces: never let any of these be empty.
+          used_ocpu=${used_ocpu:-0}
+          count=${count:-0}
+          big_count=${big_count:-0}
+          small_count=${small_count:-0}
           remaining=$(( TARGET_TOTAL_OCPU - used_ocpu ))
           echo ""
           echo "OCPUs used: $used_ocpu / $TARGET_TOTAL_OCPU"
