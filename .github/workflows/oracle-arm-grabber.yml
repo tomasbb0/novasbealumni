@@ -1,8 +1,17 @@
 name: oracle-arm-grabber
 
-# Hunts for free A1.Flex (4 OCPU, 24 GB) capacity in your Oracle tenancy.
-# Runs every 5 minutes on GitHub Actions cron. When it lands a VM, the next
-# tick will detect the running instance and self-disable.
+# Hunts for free A1.Flex capacity in your Oracle tenancy.
+#
+# Strategy: instead of one big 4 OCPU + 24 GB instance, we land up to 4x
+# small (1 OCPU + 6 GB) instances. Always-Free A1.Flex quota is "4 OCPU +
+# 24 GB total across all A1 instances", so 4x small uses the whole quota
+# while giving us 4 isolated VMs (one per agent).
+#
+# Each tick:
+#   1. Counts the OCPUs already used by running A1 instances.
+#   2. If quota is maxed (>= 4 OCPU), self-disables.
+#   3. Otherwise tries to launch a new (1 OCPU + 6 GB) A1 in any AD,
+#      named openclaw-1, openclaw-2, ...
 #
 # Required repo secrets (already set):
 #   OCI_TENANCY_OCID
@@ -14,12 +23,13 @@ name: oracle-arm-grabber
 #   OCI_SUBNET_OCID     (public subnet you want the VM in)
 #
 # Optional repo variables (vars, not secrets):
-#   OCI_AD              availability domain to target. defaults to AD-1.
-#                       valid values look like 'sJBg:EU-TURIN-1-AD-1'.
-#                       leave empty to let the workflow auto-pick the first AD.
-#   OCI_SHAPE_OCPUS     defaults to 4
-#   OCI_SHAPE_MEMORY    defaults to 24 (in GB)
-#   OCI_INSTANCE_NAME   defaults to alumni-agent
+#   OCI_AD                availability domain to target.
+#                         valid values look like 'sJBg:EU-TURIN-1-AD-1'.
+#                         leave empty to rotate through all ADs.
+#   OCI_SHAPE_OCPUS       OCPUs per new instance. defaults to 1.
+#   OCI_SHAPE_MEMORY      memory in GB per new instance. defaults to 6.
+#   OCI_TARGET_TOTAL_OCPU stop at this many total A1 OCPUs. defaults to 4.
+#   OCI_INSTANCE_PREFIX   instance name prefix. defaults to openclaw.
 
 on:
   schedule:
@@ -29,13 +39,13 @@ on:
   workflow_dispatch:
     inputs:
       ocpus:
-        description: "OCPUs to request (1-4 free)"
+        description: "OCPUs to request per instance (1-4)"
         required: false
-        default: "4"
+        default: "1"
       memory:
-        description: "Memory in GB (1-24 free)"
+        description: "Memory in GB per instance (1-24)"
         required: false
-        default: "24"
+        default: "6"
 
 permissions:
   contents: read
@@ -77,26 +87,46 @@ jobs:
           EOF
           chmod 600 ~/.oci/config
 
-      - name: Stop if a free A1 instance already exists
+      - name: Check A1 quota usage
         id: precheck
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+          TARGET_TOTAL_OCPU: ${{ vars.OCI_TARGET_TOTAL_OCPU || '4' }}
         run: |
-          existing=$(oci compute instance list \
+          # List ALL non-terminated A1.Flex instances and sum their OCPUs.
+          # We count PROVISIONING/STARTING too so we don't double-launch.
+          summary=$(oci compute instance list \
             --compartment-id "$OCI_TENANCY_OCID" \
-            --lifecycle-state RUNNING \
-            --query "data[?contains(\"shape\", 'A1.Flex')].\"display-name\"" \
-            --raw-output 2>/dev/null || echo "[]")
-          echo "existing_a1=$existing"
-          if [ "$existing" != "[]" ] && [ -n "$existing" ]; then
-            echo "have_a1=true" >> "$GITHUB_OUTPUT"
-            echo "A1 already running. Nothing to do."
+            --query "data[?contains(\"shape\", 'A1.Flex') && \"lifecycle-state\" != 'TERMINATED' && \"lifecycle-state\" != 'TERMINATING'].{name:\"display-name\", ocpus:\"shape-config\".ocpus, mem:\"shape-config\".\"memory-in-g-bs\", state:\"lifecycle-state\"}" \
+            --output json 2>/dev/null || echo "[]")
+          echo "Current A1.Flex instances:"
+          echo "$summary" | python3 -m json.tool 2>/dev/null || echo "$summary"
+
+          used_ocpu=$(echo "$summary" | jq '[.[].ocpus // 0] | add | floor // 0')
+          count=$(echo "$summary" | jq 'length // 0')
+          remaining=$(( TARGET_TOTAL_OCPU - used_ocpu ))
+          echo ""
+          echo "OCPUs used: $used_ocpu / $TARGET_TOTAL_OCPU"
+          echo "OCPUs remaining: $remaining"
+          echo "Instance count: $count"
+          echo "used_ocpu=$used_ocpu" >> "$GITHUB_OUTPUT"
+          echo "remaining_ocpu=$remaining" >> "$GITHUB_OUTPUT"
+          echo "instance_count=$count" >> "$GITHUB_OUTPUT"
+
+          if [ "$remaining" -le 0 ]; then
+            echo "quota_full=true" >> "$GITHUB_OUTPUT"
+            echo "✅ A1 quota fully used. Nothing to do."
+            {
+              echo "## A1 quota full ($used_ocpu / $TARGET_TOTAL_OCPU OCPU)"
+              echo ""
+              echo "Disable this workflow: https://github.com/${{ github.repository }}/actions/workflows/oracle-arm-grabber.yml"
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "have_a1=false" >> "$GITHUB_OUTPUT"
+            echo "quota_full=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Resolve availability domains
-        if: steps.precheck.outputs.have_a1 == 'false'
+        if: steps.precheck.outputs.quota_full == 'false'
         id: ad
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
@@ -115,7 +145,7 @@ jobs:
           echo "ads=$ads_list" >> "$GITHUB_OUTPUT"
 
       - name: Resolve latest Ubuntu 24.04 ARM image
-        if: steps.precheck.outputs.have_a1 == 'false'
+        if: steps.precheck.outputs.quota_full == 'false'
         id: image
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
@@ -134,8 +164,8 @@ jobs:
           echo "Image: $img"
           echo "id=$img" >> "$GITHUB_OUTPUT"
 
-      - name: Try to launch A1.Flex (in-run loop, multi-AD)
-        if: steps.precheck.outputs.have_a1 == 'false'
+      - name: Try to launch A1.Flex (in-run loop, multi-AD, multi-instance)
+        if: steps.precheck.outputs.quota_full == 'false'
         id: launch
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
@@ -143,23 +173,36 @@ jobs:
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
           ADS: ${{ steps.ad.outputs.ads }}
           IMAGE_ID: ${{ steps.image.outputs.id }}
-          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '4' }}
-          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '24' }}
-          DISPLAY_NAME: ${{ vars.OCI_INSTANCE_NAME || 'alumni-agent' }}
+          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '1' }}
+          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '6' }}
+          PREFIX: ${{ vars.OCI_INSTANCE_PREFIX || 'openclaw' }}
+          REMAINING_OCPU: ${{ steps.precheck.outputs.remaining_ocpu }}
+          INSTANCE_COUNT: ${{ steps.precheck.outputs.instance_count }}
         run: |
           set +e
+          # Cap the requested OCPUs at what's left in the quota for this run.
+          if [ "$OCPUS" -gt "$REMAINING_OCPU" ]; then
+            echo "Capping requested OCPUs $OCPUS → $REMAINING_OCPU (quota left)"
+            OCPUS="$REMAINING_OCPU"
+            # Scale memory proportionally (quota is 6 GB per OCPU).
+            MEMORY=$(( OCPUS * 6 ))
+          fi
+          # Pick next sequential name like openclaw-1, openclaw-2, ...
+          next_idx=$(( INSTANCE_COUNT + 1 ))
+          DISPLAY_NAME="${PREFIX}-${next_idx}"
+          echo "Will launch: $DISPLAY_NAME (${OCPUS} OCPU, ${MEMORY} GB)"
+
           # Loop for ~8.5 minutes (job timeout 10), trying every AD with ~15s
-          # spacing. This squeezes ~12-15 attempts per run instead of ~5.
+          # spacing. This squeezes ~15-20 attempts per run.
           end_ts=$(( $(date +%s) + 510 ))
           attempt=0
           ad_array=( $ADS )
+          landed_ids=""
           while [ "$(date +%s)" -lt "$end_ts" ]; do
             for AD in "${ad_array[@]}"; do
               attempt=$((attempt + 1))
               echo ""
-              echo "=== Attempt $attempt | AD: $AD | $(date -u +%H:%M:%S) ==="
-              # Use --wait-for-state PROVISIONING (fast return) instead of RUNNING (~90s wait).
-              # If capacity hits, we get the OCID immediately and the next step waits for RUNNING.
+              echo "=== Attempt $attempt | AD: $AD | name: $DISPLAY_NAME | $(date -u +%H:%M:%S) ==="
               out=$(oci compute instance launch \
                 --availability-domain "$AD" \
                 --compartment-id "$OCI_TENANCY_OCID" \
@@ -175,15 +218,33 @@ jobs:
                 --max-wait-seconds 30 2>&1)
               rc=$?
               if [ $rc -eq 0 ] || echo "$out" | grep -q "ocid1.instance."; then
-                # Got an instance OCID back. Either fully RUNNING or still provisioning.
                 iid=$(echo "$out" | python3 -c "import sys,re; d=sys.stdin.read(); m=re.search(r'ocid1\.instance\.[A-Za-z0-9._-]+', d); print(m.group(0) if m else '')")
                 if [ -n "$iid" ]; then
                   echo ""
                   echo "🎉 LANDED on attempt $attempt in AD $AD"
                   echo "Instance: $iid"
-                  echo "landed=true" >> "$GITHUB_OUTPUT"
-                  echo "instance_id=$iid" >> "$GITHUB_OUTPUT"
-                  exit 0
+                  echo "Name: $DISPLAY_NAME"
+                  if [ -z "$landed_ids" ]; then
+                    landed_ids="$iid"
+                  else
+                    landed_ids="${landed_ids},${iid}"
+                  fi
+                  # Update accounting and decide whether to keep going.
+                  REMAINING_OCPU=$(( REMAINING_OCPU - OCPUS ))
+                  INSTANCE_COUNT=$(( INSTANCE_COUNT + 1 ))
+                  if [ "$REMAINING_OCPU" -le 0 ]; then
+                    echo "Quota fully used. Stopping."
+                    break 2
+                  fi
+                  next_idx=$(( INSTANCE_COUNT + 1 ))
+                  DISPLAY_NAME="${PREFIX}-${next_idx}"
+                  if [ "$OCPUS" -gt "$REMAINING_OCPU" ]; then
+                    OCPUS="$REMAINING_OCPU"
+                    MEMORY=$(( OCPUS * 6 ))
+                  fi
+                  echo "Continuing: ${REMAINING_OCPU} OCPU left, next instance ${DISPLAY_NAME} (${OCPUS} OCPU, ${MEMORY} GB)"
+                  sleep 5
+                  continue
                 fi
               fi
               if echo "$out" | grep -qiE "Out of (host )?capacity|InternalError"; then
@@ -193,48 +254,73 @@ jobs:
                 sleep 30
                 continue
               elif echo "$out" | grep -qiE "LimitExceeded|QuotaExceeded"; then
-                echo "  → quota exhausted, stopping run"
+                echo "  → quota exhausted (per Oracle), stopping run"
                 echo "$out" >&2
-                echo "landed=false" >> "$GITHUB_OUTPUT"
-                exit 1
+                break 2
               else
-                # Real unexpected error. Surface it but keep trying.
                 echo "  → unexpected response (logged, continuing):"
                 echo "$out" | head -20
               fi
-              # Spacing between attempts (well under 10/min API limit).
               sleep 15
             done
           done
+
           echo ""
-          echo "Loop ended after $attempt attempts. No capacity this run."
-          echo "landed=false" >> "$GITHUB_OUTPUT"
+          if [ -n "$landed_ids" ]; then
+            echo "Run finished. Landed: $landed_ids"
+            echo "landed=true" >> "$GITHUB_OUTPUT"
+            echo "instance_ids=$landed_ids" >> "$GITHUB_OUTPUT"
+          else
+            echo "Loop ended after $attempt attempts. No capacity this run."
+            echo "landed=false" >> "$GITHUB_OUTPUT"
+          fi
           exit 0
 
-      - name: Wait for RUNNING and report public IP
+      - name: Wait for RUNNING and report all A1 instances
         if: steps.launch.outputs.landed == 'true'
         env:
           OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
-          INSTANCE_ID: ${{ steps.launch.outputs.instance_id }}
+          INSTANCE_IDS: ${{ steps.launch.outputs.instance_ids }}
         run: |
-          set -e
-          echo "Waiting for instance to reach RUNNING..."
-          oci compute instance get --instance-id "$INSTANCE_ID" \
-            --wait-for-state RUNNING --max-wait-seconds 300 >/dev/null
+          set +e
+          echo "Waiting for newly-launched instances to reach RUNNING..."
+          IFS=',' read -ra ids <<< "$INSTANCE_IDS"
+          for iid in "${ids[@]}"; do
+            echo "  ⏳ $iid"
+            oci compute instance get --instance-id "$iid" \
+              --wait-for-state RUNNING --max-wait-seconds 300 >/dev/null 2>&1
+          done
           sleep 5
-          ip=$(oci compute instance list-vnics \
-            --instance-id "$INSTANCE_ID" \
-            --query 'data[0]."public-ip"' --raw-output)
+
           echo "================================================================"
-          echo "  🎉  A1.Flex landed!"
-          echo "  Instance: $INSTANCE_ID"
-          echo "  Public IP: $ip"
-          echo "  SSH: ssh -i ~/.ssh/id_rsa ubuntu@$ip"
+          echo "  🎉  Landed ${#ids[@]} new A1.Flex instance(s) this run"
           echo "================================================================"
-          echo "## Oracle A1 instance landed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Instance OCID: \`$INSTANCE_ID\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Public IP: \`$ip\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- SSH: \`ssh -i ~/.ssh/id_rsa ubuntu@$ip\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Disable this workflow now: https://github.com/${{ github.repository }}/actions/workflows/oracle-arm-grabber.yml" >> "$GITHUB_STEP_SUMMARY"
+
+          # Now list ALL running A1 instances (newly landed + pre-existing)
+          # so the Step Summary is the canonical view of the fleet.
+          all_json=$(oci compute instance list \
+            --compartment-id "$OCI_TENANCY_OCID" \
+            --lifecycle-state RUNNING \
+            --query "data[?contains(\"shape\", 'A1.Flex')].{id:id, name:\"display-name\", ocpus:\"shape-config\".ocpus, mem:\"shape-config\".\"memory-in-g-bs\"}" \
+            --output json 2>/dev/null || echo "[]")
+
+          {
+            echo "## Oracle A1.Flex fleet status"
+            echo ""
+            echo "| Name | OCPU | RAM | Public IP | SSH |"
+            echo "| --- | --- | --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          total_ocpu=0
+          echo "$all_json" | jq -r '.[] | "\(.id)|\(.name)|\(.ocpus)|\(.mem)"' | while IFS='|' read -r iid name ocpus mem; do
+            ip=$(oci compute instance list-vnics \
+              --instance-id "$iid" \
+              --query 'data[0]."public-ip"' --raw-output 2>/dev/null || echo "?")
+            echo "  • $name (${ocpus} OCPU, ${mem} GB) → $ip"
+            echo "| \`$name\` | $ocpus | ${mem} GB | \`$ip\` | \`ssh ubuntu@$ip\` |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          {
+            echo ""
+            echo "Disable this workflow when full: https://github.com/${{ github.repository }}/actions/workflows/oracle-arm-grabber.yml"
+          } >> "$GITHUB_STEP_SUMMARY"
