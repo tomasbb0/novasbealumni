@@ -104,14 +104,16 @@ jobs:
 
           used_ocpu=$(echo "${summary:-[]}" | jq '([.[].ocpus // 0] | add // 0) | floor')
           count=$(echo "${summary:-[]}" | jq 'length // 0')
+          big_count=$(echo "${summary:-[]}" | jq '[.[] | select((.ocpus // 0) >= 2)] | length')
           remaining=$(( TARGET_TOTAL_OCPU - used_ocpu ))
           echo ""
           echo "OCPUs used: $used_ocpu / $TARGET_TOTAL_OCPU"
           echo "OCPUs remaining: $remaining"
-          echo "Instance count: $count"
+          echo "Instance count: $count (big slots filled: $big_count)"
           echo "used_ocpu=$used_ocpu" >> "$GITHUB_OUTPUT"
           echo "remaining_ocpu=$remaining" >> "$GITHUB_OUTPUT"
           echo "instance_count=$count" >> "$GITHUB_OUTPUT"
+          echo "big_count=$big_count" >> "$GITHUB_OUTPUT"
 
           if [ "$remaining" -le 0 ]; then
             echo "quota_full=true" >> "$GITHUB_OUTPUT"
@@ -173,13 +175,24 @@ jobs:
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
           ADS: ${{ steps.ad.outputs.ads }}
           IMAGE_ID: ${{ steps.image.outputs.id }}
-          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '1' }}
-          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '6' }}
+          OCPUS: ${{ github.event.inputs.ocpus || vars.OCI_SHAPE_OCPUS || '2' }}
+          MEMORY: ${{ github.event.inputs.memory || vars.OCI_SHAPE_MEMORY || '12' }}
+          SMALL_OCPUS: ${{ vars.OCI_SMALL_OCPUS || '1' }}
+          SMALL_MEMORY: ${{ vars.OCI_SMALL_MEMORY || '6' }}
           PREFIX: ${{ vars.OCI_INSTANCE_PREFIX || 'openclaw' }}
           REMAINING_OCPU: ${{ steps.precheck.outputs.remaining_ocpu }}
           INSTANCE_COUNT: ${{ steps.precheck.outputs.instance_count }}
+          BIG_COUNT: ${{ steps.precheck.outputs.big_count }}
         run: |
           set +e
+          # Mix strategy: ONE big slot (2 OCPU + 12 GB) + smaller slots
+          # (1 OCPU + 6 GB) until quota is full. If a big slot already
+          # exists from a prior run, skip straight to small.
+          if [ "$BIG_COUNT" -gt 0 ] || [ "$REMAINING_OCPU" -lt 2 ]; then
+            echo "Big slot already taken (or no room). Switching to small (${SMALL_OCPUS}/${SMALL_MEMORY})."
+            OCPUS="$SMALL_OCPUS"
+            MEMORY="$SMALL_MEMORY"
+          fi
           # Cap the requested OCPUs at what's left in the quota for this run.
           if [ "$OCPUS" -gt "$REMAINING_OCPU" ]; then
             echo "Capping requested OCPUs $OCPUS → $REMAINING_OCPU (quota left)"
@@ -238,6 +251,10 @@ jobs:
                   fi
                   next_idx=$(( INSTANCE_COUNT + 1 ))
                   DISPLAY_NAME="${PREFIX}-${next_idx}"
+                  # After landing one (especially the big slot), all
+                  # subsequent instances in this run go to small.
+                  OCPUS="$SMALL_OCPUS"
+                  MEMORY="$SMALL_MEMORY"
                   if [ "$OCPUS" -gt "$REMAINING_OCPU" ]; then
                     OCPUS="$REMAINING_OCPU"
                     MEMORY=$(( OCPUS * 6 ))
