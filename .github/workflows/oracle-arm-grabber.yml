@@ -33,9 +33,10 @@ name: oracle-arm-grabber
 
 on:
   schedule:
-    # Every 10 min. Each run takes ~9 min, so this avoids the queue/cancel
-    # collisions we got with */5 (52 cancelled runs in the first 17h).
-    - cron: "*/10 * * * *"
+    # Every 15 min. Each run takes ~9 min (timeout-minutes: 10), so this
+    # gives a ~5-min buffer and avoids the queue/cancel collisions we saw
+    # with */10 (14 cancelled out of 30 runs in 24h, 46% rate).
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       ocpus:
