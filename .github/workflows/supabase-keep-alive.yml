@@ -1,0 +1,57 @@
+name: Supabase keep-alive
+
+# Prevents the free-tier project from auto-pausing (7-day inactivity rule).
+# Hits the REST endpoint with the anon key every 3 days, which counts as
+# database activity and resets the inactivity timer.
+#
+# This is the same trick used by https://github.com/topics/supabase-keep-alive
+# repos. Costs nothing, uses only public Actions minutes.
+#
+# If the ping ever returns a non-2xx, the job fails and you get a GitHub
+# notification, so you'll know if the project is paused/broken without
+# having to manually check.
+
+on:
+  schedule:
+    # Every 3 days at 12:34 UTC. Off-the-hour to avoid contention.
+    - cron: "34 12 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST endpoint
+        env:
+          SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+            echo "::error::Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY repository variables"
+            exit 1
+          fi
+
+          echo "Pinging ${SUPABASE_URL}/rest/v1/profiles ..."
+          status=$(curl -s -o /tmp/body -w "%{http_code}" -m 15 \
+            "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          echo "HTTP ${status}"
+          echo "Response body:"
+          head -c 500 /tmp/body || true
+          echo
+
+          case "$status" in
+            2*)
+              echo "✅ Supabase project is alive."
+              ;;
+            *)
+              echo "::error::Supabase ping failed with HTTP ${status}"
+              exit 1
+              ;;
+          esac
