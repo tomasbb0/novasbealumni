@@ -143,6 +143,33 @@ export default function DashboardPage() {
 
       <LumaCard className="mt-8" />
 
+      <section className="mt-10">
+        <h2 className="font-serif text-xl text-[color:var(--foreground)] mb-4">A tua plataforma</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { href: "/directory", t: "Directory", d: "21k+ alumni, filtros por cidade e programa." },
+            { href: "/events", t: "Events", d: "Eventos por chapter, RSVP e capacidade." },
+            { href: "/mentoring", t: "Mentoring", d: "Mentores Nova com pedido directo." },
+            { href: "/jobs", t: "Jobs", d: "Vagas publicadas por alumni." },
+            { href: "/forums", t: "Forums", d: "Conversa por tema e chapter." },
+            { href: "/groups", t: "Groups", d: "Chapters e grupos de interesse." },
+            { href: "/news", t: "News", d: "Spotlights e notícias da rede." },
+            { href: "/connections", t: "Connections", d: "Pedidos e contactos directos." },
+          ].map((m) => (
+            <Link
+              key={m.href}
+              href={m.href}
+              className="rounded-xl border border-[color:var(--border)] bg-white p-4 hover:border-[color:var(--primary)] transition group"
+            >
+              <div className="text-xs uppercase tracking-widest text-[color:var(--primary)]">Module</div>
+              <div className="mt-1 font-serif text-lg text-[color:var(--foreground)]">{m.t}</div>
+              <div className="mt-1 text-xs text-[color:var(--muted)] leading-snug">{m.d}</div>
+              <div className="mt-3 text-xs text-[color:var(--primary)] group-hover:translate-x-0.5 transition">Abrir →</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {incoming.length > 0 && (
         <div className="mt-8 rounded-lg border border-[color:var(--primary)] bg-[color:var(--primary-50)] p-5">
           <h2 className="font-serif text-lg text-[color:var(--foreground)]">

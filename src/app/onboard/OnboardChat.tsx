@@ -59,28 +59,49 @@ export default function OnboardChat() {
     }
 
     setPending(true);
+    // Insert empty agent message we will fill as tokens stream in
+    const replyTs = Date.now();
+    setMessages((m) => [...m, { role: "agent", text: "", ts: replyTs }]);
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          session_id: sessionId.current,
-          message: text,
-          history: messages.map((m) => ({ role: m.role, text: m.text })),
+          query: text,
+          sessionId: sessionId.current,
         }),
       });
-      if (!res.ok) throw new Error(`Agent returned ${res.status}`);
-      const data = (await res.json()) as { reply?: string };
-      setMessages((m) => [
-        ...m,
-        {
-          role: "agent",
-          text: data.reply ?? "(empty reply)",
-          ts: Date.now(),
-        },
-      ]);
+      if (!res.ok || !res.body) throw new Error(`Agent returned ${res.status}`);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let acc = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          const line = chunk.split("\n").find((p) => p.startsWith("data:"));
+          if (!line) continue;
+          try {
+            const evt = JSON.parse(line.slice(5).trim()) as { type: string; text?: string };
+            if (evt.type === "narration" && evt.text) {
+              acc += evt.text;
+              setMessages((m) => m.map((msg) => (msg.ts === replyTs ? { ...msg, text: acc } : msg)));
+            }
+          } catch {
+            /* ignore malformed chunk */
+          }
+        }
+      }
+      if (!acc) {
+        setMessages((m) => m.map((msg) => (msg.ts === replyTs ? { ...msg, text: "(empty reply)" } : msg)));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      setMessages((m) => m.filter((msg) => msg.ts !== replyTs));
     } finally {
       setPending(false);
     }
