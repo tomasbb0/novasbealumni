@@ -21,7 +21,7 @@ export function SiteNav() {
         <div className="flex items-center gap-6 text-sm text-[color:var(--foreground)]">
           <Link href="/onboard" className="hover:text-[color:var(--primary)] transition">Join</Link>
           <Link href="/connections" className="hover:text-[color:var(--primary)] transition">Connections</Link>
-          <Link href="/agent" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Agent</Link>
+          <Link href="/agent" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Luma</Link>
           <Link href="/pitch" className="hover:text-[color:var(--primary)] transition hidden sm:inline">For partners</Link>
           {configured && user ? (
             <>
