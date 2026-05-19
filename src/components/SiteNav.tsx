@@ -23,8 +23,8 @@ export function SiteNav() {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
-      <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-end gap-3 group text-black shrink-0" aria-label={brand.name}>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-end gap-2 sm:gap-3 group text-black shrink-0" aria-label={brand.name}>
           <NovaLogo size={20} showSignature={false} animate />
           <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)] mb-1" />
           <span className="hidden sm:inline-block font-serif text-sm tracking-tight text-[color:var(--muted)] mb-0.5">
@@ -47,30 +47,32 @@ export function SiteNav() {
           )}
         </div>
       </div>
-      <nav className="border-t border-[color:var(--border)]/60">
-        <div className="mx-auto max-w-6xl px-6 h-11 flex items-center gap-1 overflow-x-auto text-sm">
-          {configured && user && (
-            <Link
-              href="/dashboard"
-              className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${pathname === "/dashboard" ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}
-            >
-              Dashboard
-            </Link>
-          )}
-          {platformLinks.map((l) => {
-            const active = pathname === l.href || pathname?.startsWith(l.href + "/");
-            return (
+      {configured && user && (
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-3">
+          <nav className="mx-auto w-full max-w-fit rounded-full border border-[color:var(--border)] bg-white/90 shadow-sm overflow-x-auto">
+            <div className="flex items-center gap-1 px-2 py-1.5 text-sm whitespace-nowrap">
               <Link
-                key={l.href}
-                href={l.href}
-                className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${active ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}
+                href="/dashboard"
+                className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${pathname === "/dashboard" ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}
               >
-                {l.label}
+                Dashboard
               </Link>
-            );
-          })}
+              {platformLinks.map((l) => {
+                const active = pathname === l.href || pathname?.startsWith(l.href + "/");
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${active ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}
+                  >
+                    {l.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
         </div>
-      </nav>
+      )}
     </header>
   );
 }
