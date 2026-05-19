@@ -27,7 +27,7 @@ export function SiteNav() {
   return (
     <>
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-end gap-2 sm:gap-3 group text-black shrink-0" aria-label={brand.name} onClick={() => setMobileOpen(false)}>
             <NovaLogo size={20} showSignature={false} animate />
             <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)] mb-1" />
@@ -65,7 +65,7 @@ export function SiteNav() {
       </header>
       {showModules && (
         <>
-          <div className="hidden md:block mx-auto max-w-6xl px-6 mt-3">
+          <div className="hidden md:block mx-auto max-w-7xl px-6 mt-3">
             <nav className="w-full rounded-full border border-[color:var(--border)] bg-white/90 shadow-sm overflow-x-auto">
               <div className="flex items-center gap-1 px-2 py-1.5 text-sm whitespace-nowrap">
                 <Link
@@ -90,7 +90,7 @@ export function SiteNav() {
             </nav>
           </div>
           {mobileOpen && (
-            <div className="md:hidden mx-auto max-w-6xl px-6 mt-3">
+            <div className="md:hidden mx-auto max-w-7xl px-4 mt-3">
               <nav className="w-full rounded-2xl border border-[color:var(--border)] bg-white/95 shadow-sm">
                 <div className="flex flex-col p-2 text-sm">
                   <Link

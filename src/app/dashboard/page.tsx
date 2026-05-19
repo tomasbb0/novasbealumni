@@ -124,7 +124,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-12">
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-12">
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <p className="text-xs uppercase tracking-widest text-[color:var(--primary)]">Welcome back</p>
