@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import NetworkerPage from "@/app/networker/page";
+import NetworkerExperience from "@/components/NetworkerExperience";
 
 export const metadata: Metadata = {
   title: "Luma. Agente Nova SBE Alumni",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AgentPage() {
-  return <NetworkerPage />;
+  return <NetworkerExperience />;
 }

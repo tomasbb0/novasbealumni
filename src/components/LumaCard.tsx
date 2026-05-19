@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const examples = [
-  { label: "Intro em fintech B2B em Berlim", href: "/networker/?example=0" },
-  { label: "Mentor para entrar em IB Londres", href: "/networker/?example=1" },
-  { label: "Deal flow SaaS ibérico", href: "/networker/?example=2" },
-  { label: "Aconselhamento SaaS em saúde", href: "/networker/?example=3" },
+  { label: "Intro em fintech B2B em Berlim", href: "/agent/?example=0" },
+  { label: "Mentor para entrar em IB Londres", href: "/agent/?example=1" },
+  { label: "Deal flow SaaS ibérico", href: "/agent/?example=2" },
+  { label: "Aconselhamento SaaS em saúde", href: "/agent/?example=3" },
 ];
 
 export default function LumaCard({ className = "" }: { className?: string }) {
@@ -26,7 +26,7 @@ export default function LumaCard({ className = "" }: { className?: string }) {
           </p>
         </div>
         <Link
-          href="/networker/"
+          href="/agent/"
           className="hidden shrink-0 rounded-full border border-[#033F85]/25 bg-white px-4 py-2 text-sm font-semibold text-[#033F85] transition hover:border-[#033F85] sm:inline-block"
         >
           Abrir Luma
