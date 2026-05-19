@@ -391,7 +391,7 @@ export default function NetworkerExperience() {
   return (
     <main className="relative min-h-[calc(100vh-8rem)]">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(3,63,133,0.11),_transparent_50%)]" />
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 sm:py-14">
         <header className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#033F85]/20 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#033F85]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#033F85]" />
@@ -557,20 +557,6 @@ export default function NetworkerExperience() {
             </div>
           </div>
         </form>
-
-        <div className="mt-4 flex items-center justify-center gap-4 rounded-2xl border border-[color:var(--border)] bg-white/70 px-4 py-3 text-xs text-[color:var(--muted)]">
-          <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=https%3A%2F%2Fweb.whatsapp.com%2F"
-            alt="QR para web.whatsapp.com"
-            width={72}
-            height={72}
-            className="rounded-md"
-          />
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[color:var(--foreground)] font-medium">Abrir WhatsApp Web</span>
-            <span>Aponta o telemóvel para o código e abre o web.whatsapp.com.</span>
-          </div>
-        </div>
       </div>
     </main>
   );

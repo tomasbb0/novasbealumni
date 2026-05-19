@@ -90,9 +90,9 @@ export function SiteNav() {
             </nav>
           </div>
           {mobileOpen && (
-            <div className="md:hidden mx-auto max-w-7xl px-4 mt-3">
+            <div className="md:hidden w-full px-4 mt-3">
               <nav className="w-full rounded-2xl border border-[color:var(--border)] bg-white/95 shadow-sm">
-                <div className="flex flex-col p-2 text-sm">
+                <div className="flex w-full flex-col p-2 text-sm">
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileOpen(false)}
