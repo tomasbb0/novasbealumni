@@ -15,7 +15,7 @@ export default function JobsPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-12">
+    <div className="mx-auto w-full max-w-7xl px-6 py-12">
       <header>
         <p className="text-xs uppercase tracking-widest text-[color:var(--primary)]">Jobs</p>
         <h1 className="mt-2 font-serif text-4xl text-[color:var(--foreground)]">Oportunidades de alumni para alumni</h1>

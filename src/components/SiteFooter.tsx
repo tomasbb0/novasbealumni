@@ -5,7 +5,7 @@ import { NovaSBEMark } from "./NovaSBEMark";
 export function SiteFooter() {
   return (
     <footer className="border-t border-[color:var(--border)] mt-24 bg-[color:var(--card)]">
-      <div className="mx-auto max-w-6xl px-6 py-12 flex flex-col sm:flex-row gap-8 sm:items-start sm:justify-between text-sm text-[color:var(--muted)]">
+      <div className="mx-auto max-w-7xl px-6 py-12 flex flex-col sm:flex-row gap-8 sm:items-start sm:justify-between text-sm text-[color:var(--muted)]">
         <div>
           <div className="flex items-center gap-3 text-[color:var(--foreground)]">
             <NovaSBEMark variant="wordmark" className="h-4 w-auto" />

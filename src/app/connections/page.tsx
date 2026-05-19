@@ -18,7 +18,7 @@ export default function ConnectionsPage() {
   const lastTick = all[0]?.generated_at;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-20">
+    <div className="mx-auto w-full max-w-7xl px-6 py-20">
       <header className="mb-12">
         <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white px-3 py-1 text-xs uppercase tracking-widest text-[color:var(--primary)]">
           <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)] animate-pulse" />

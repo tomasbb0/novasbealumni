@@ -53,7 +53,7 @@ export default function DirectoryPage() {
   if (!configured) return <div className="mx-auto w-full max-w-2xl px-6 py-20">Sign-in is not configured. See SETUP_AUTH.md.</div>;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-12">
+    <div className="mx-auto w-full max-w-7xl px-6 py-12">
       <header>
         <p className="text-xs uppercase tracking-widest text-[color:var(--primary)]">Directory</p>
         <h1 className="mt-2 font-serif text-4xl text-[color:var(--foreground)]">Alumni</h1>

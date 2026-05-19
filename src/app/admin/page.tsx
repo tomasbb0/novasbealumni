@@ -16,7 +16,7 @@ export default function AdminPage() {
   const last = activity[0];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-16">
+    <div className="mx-auto w-full max-w-7xl px-6 py-16">
       <header className="mb-10">
         <h1 className="font-serif text-5xl text-[color:var(--foreground)]">
           Admin

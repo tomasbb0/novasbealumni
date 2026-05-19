@@ -25,7 +25,7 @@ export default function Home() {
         >
           <circle cx="50" cy="50" r="39.05" fill="none" stroke="#030403" strokeWidth="18.9" />
         </svg>
-        <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32 relative">
+        <div className="mx-auto max-w-7xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32 relative">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white px-3 py-1 text-xs uppercase tracking-widest text-[color:var(--primary)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)]" />
@@ -58,7 +58,7 @@ export default function Home() {
       </section>
 
       {/* What it is */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-20 grid sm:grid-cols-3 gap-6">
+      <section className="mx-auto w-full max-w-7xl px-6 py-20 grid sm:grid-cols-3 gap-6">
         {[
           { t: "Mixers", d: "Quarterly gatherings in Manhattan. No badges, no name plates, no PowerPoint." },
           { t: "Intros", d: "Warm intros across finance, consulting, tech, and founders. We know who knows whom." },
@@ -80,7 +80,7 @@ export default function Home() {
       </section>
 
       {/* Platform */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-20">
+      <section className="mx-auto w-full max-w-7xl px-6 py-20">
         <div className="text-center max-w-2xl mx-auto">
           <p className="text-xs uppercase tracking-widest text-[color:var(--primary)]">A plataforma</p>
           <h2 className="mt-3 font-serif text-3xl sm:text-4xl text-[color:var(--foreground)]">Tudo o que uma comunidade alumni precisa, num só sítio</h2>
@@ -112,7 +112,7 @@ export default function Home() {
       </section>
 
       {/* First event */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-12">
+      <section className="mx-auto w-full max-w-7xl px-6 py-12">
         <div className="rounded-3xl bg-[color:var(--primary)] text-[color:var(--on-primary)] p-10 sm:p-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 opacity-15">
             <NovaCircleDash size={160} dashScale={0.56} color="#fff" />
@@ -136,7 +136,7 @@ export default function Home() {
       </section>
 
       {/* Closing CTA */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-24 text-center">
+      <section className="mx-auto w-full max-w-7xl px-6 py-24 text-center">
         <h2 className="font-serif text-3xl sm:text-4xl text-[color:var(--foreground)]">
           Were you at Carcavelos? Welcome home.
         </h2>
