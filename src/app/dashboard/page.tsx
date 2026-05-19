@@ -8,6 +8,7 @@ import { getProfile, isProfileComplete, type Profile } from "@/lib/profile";
 import { brand } from "@/lib/brand";
 import { listMyConnections, respondToConnection, type Connection } from "@/lib/connectRequests";
 import { listUpcomingEvents, type AlumniEvent } from "@/lib/events";
+import LumaCard from "@/components/LumaCard";
 
 type EventLite = { id: string; title: string; dateLabel: string; venueLabel: string; rsvpUrl?: string | null };
 const fallbackEvents: EventLite[] = [
@@ -117,6 +118,7 @@ export default function DashboardPage() {
           Sign-in is not configured yet. The site owner needs to finish the
           one-time Supabase + LinkedIn setup. See <code>SETUP_AUTH.md</code>.
         </p>
+        <LumaCard className="mt-8" />
       </div>
     );
   }
@@ -138,6 +140,8 @@ export default function DashboardPage() {
           <button onClick={signOut} className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Sign out</button>
         </div>
       </header>
+
+      <LumaCard className="mt-8" />
 
       {incoming.length > 0 && (
         <div className="mt-8 rounded-lg border border-[color:var(--primary)] bg-[color:var(--primary-50)] p-5">

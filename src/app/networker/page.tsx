@@ -224,9 +224,17 @@ export default function NetworkerPage() {
       const params = new URLSearchParams(window.location.search);
       const forceLive = params.get("live") === "1" && CHAT_URL;
       setUseMock(!forceLive);
+      const exampleParam = params.get("example");
+      if (exampleParam !== null) {
+        const idx = Number(exampleParam);
+        if (Number.isInteger(idx) && idx >= 0 && idx < examples.length) {
+          runExample(examples[idx].script);
+        }
+      }
     }, 0);
 
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
