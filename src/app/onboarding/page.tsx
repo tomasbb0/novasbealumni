@@ -54,9 +54,71 @@ export default function OnboardingPage() {
     })();
   }, [ready, configured, user, router]);
 
-  const ENRICH_URL = process.env.NEXT_PUBLIC_AGENT_CHAT_URL?.replace(/\/chat$/, "/enrich-profile") || "";
+  const BASE_URL = (process.env.NEXT_PUBLIC_AGENT_CHAT_URL || "").replace(/\/chat$/, "");
+  const ENRICH_URL = `${BASE_URL}/enrich-profile`;
+  const FIND_URL = `${BASE_URL}/find-linkedin-by-name`;
   const [enriching, setEnriching] = useState(false);
   const [enrichMsg, setEnrichMsg] = useState<string | null>(null);
+
+  type Candidate = { linkedinUrl: string; fullName: string; title: string | null; company: string | null; location: string | null; summary: string | null };
+  const [candidates, setCandidates] = useState<Candidate[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (form.linkedin_url || candidates !== null) return;
+    const name = form.full_name?.trim();
+    if (!name) return;
+    setSearching(true);
+    fetch(FIND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName: name }),
+    })
+      .then((r) => r.json())
+      .then((j) => setCandidates(Array.isArray(j.candidates) ? j.candidates : []))
+      .catch(() => setCandidates([]))
+      .finally(() => setSearching(false));
+  }, [loading, user, form.linkedin_url, form.full_name, candidates, FIND_URL]);
+
+  async function pickCandidate(linkedinUrl: string) {
+    if (!user) return;
+    setCandidates(null);
+    set("linkedin_url", linkedinUrl);
+    setEnriching(true);
+    setEnrichMsg(null);
+    try {
+      const res = await fetch(ENRICH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, linkedinUrl }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Falha a ler o LinkedIn");
+      const f = j.fields || {};
+      setForm((prev) => ({
+        ...prev,
+        full_name: prev.full_name || f.full_name || "",
+        headline: prev.headline || f.headline || "",
+        avatar_url: prev.avatar_url || f.avatar_url || "",
+        current_company: prev.current_company || f.current_company || "",
+        current_role: prev.current_role || f.current_role || "",
+        city: prev.city || f.city || "",
+        country: prev.country || f.country || "",
+        programme: prev.programme || f.programme || "",
+        grad_year: prev.grad_year || f.grad_year || undefined,
+        offering: prev.offering || f.offering || "",
+        linkedin_url: linkedinUrl,
+      }));
+      setEnrichMsg(j.novaMatch
+        ? `✓ Encontrei o teu registo na Nova SBE (${j.novaSchool}). Confirma e guarda.`
+        : "Preenchi o que consegui. Confirma o programme/year manualmente.");
+    } catch (e) {
+      setEnrichMsg(e instanceof Error ? e.message : "Erro a ler LinkedIn");
+    } finally {
+      setEnriching(false);
+    }
+  }
 
   async function onAutoFill() {
     if (!user) return;
@@ -126,6 +188,49 @@ export default function OnboardingPage() {
       <p className="mt-3 text-[color:var(--muted)]">
         Confirm a few details so other alumni can find you. You can edit any of this later.
       </p>
+
+      {(searching || (candidates && candidates.length > 0)) && !form.linkedin_url && (
+        <div className="mt-8 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5">
+          {searching ? (
+            <p className="text-sm text-[color:var(--muted)]">A procurar o teu perfil no LinkedIn…</p>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-[color:var(--foreground)]">Qual destes és tu?</p>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">Encontrei {candidates!.length} perfis. Carrega no teu para preencher tudo automaticamente.</p>
+              <div className="mt-4 space-y-2">
+                {candidates!.map((c) => (
+                  <button
+                    key={c.linkedinUrl}
+                    type="button"
+                    onClick={() => pickCandidate(c.linkedinUrl)}
+                    disabled={enriching}
+                    className="block w-full text-left rounded-xl border border-[color:var(--border)] bg-white px-4 py-3 hover:border-[color:var(--primary)] transition disabled:opacity-50"
+                  >
+                    <div className="text-sm font-medium text-[color:var(--foreground)]">{c.fullName}</div>
+                    <div className="text-xs text-[color:var(--muted)] mt-0.5">
+                      {[c.title, c.company].filter(Boolean).join(" @ ")}{c.location ? ` · ${c.location}` : ""}
+                    </div>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCandidates([])}
+                  className="block w-full text-left rounded-xl border border-dashed border-[color:var(--border)] px-4 py-3 text-xs text-[color:var(--muted)] hover:border-[color:var(--primary)] transition"
+                >
+                  Nenhum destes. Preencho manualmente.
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {enriching && (
+        <div className="mt-4 text-sm text-[color:var(--muted)]">A ler o teu perfil LinkedIn…</div>
+      )}
+      {enrichMsg && !enriching && (
+        <div className="mt-4 text-sm text-[color:var(--foreground)]">{enrichMsg}</div>
+      )}
 
       <form onSubmit={onSubmit} className="mt-10 space-y-6">
         <Field label="Full name" required>
