@@ -387,7 +387,8 @@ export default function NetworkerPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <main className="min-h-[calc(100vh-8rem)] bg-[radial-gradient(ellipse_at_top_left,_rgba(3,63,133,0.11),_transparent_50%)]">
+    <main className="relative min-h-[calc(100vh-8rem)]">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(3,63,133,0.11),_transparent_50%)]" />
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6 sm:py-14">
         <header className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#033F85]/20 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#033F85]">
