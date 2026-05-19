@@ -15,15 +15,15 @@ const platformLinks = [
   { href: "/forums", label: "Forums" },
   { href: "/groups", label: "Groups" },
   { href: "/news", label: "News" },
+  { href: "/agent", label: "Luma" },
 ];
 
 export function SiteNav() {
   const { configured, user } = useAuth();
   const pathname = usePathname();
-  const showPlatform = true;
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
-      <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+      <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-end gap-3 group text-black shrink-0" aria-label={brand.name}>
           <NovaLogo size={20} showSignature={false} animate />
           <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)] mb-1" />
@@ -31,45 +31,37 @@ export function SiteNav() {
             Alumni Club
           </span>
         </Link>
-        <div className="flex items-center gap-6 text-sm text-[color:var(--foreground)]">
-          <Link href="/onboard" className="hover:text-[color:var(--primary)] transition">Join</Link>
-          <Link href="/pitch" className="hover:text-[color:var(--primary)] transition hidden sm:inline">For partners</Link>
+        <div className="flex items-center gap-1 flex-1 overflow-x-auto justify-end text-sm">
+          {platformLinks.map((l) => {
+            const active = pathname === l.href || pathname?.startsWith(l.href + "/");
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${active ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
           {configured && user ? (
             <>
-              <Link href="/dashboard" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Dashboard</Link>
+              <Link href="/dashboard" className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${pathname === "/dashboard" ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}>Dashboard</Link>
               <UserMenu />
             </>
           ) : (
             <>
-              <Link href="/signin" className="hover:text-[color:var(--primary)] transition">Sign in</Link>
+              <Link href="/signin" className="px-3 py-1.5 rounded-full whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--primary)] transition">Sign in</Link>
               <Link
                 href="/onboard"
-                className="ml-2 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition"
+                className="ml-1 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition whitespace-nowrap"
               >
-                Join the list
+                Join
               </Link>
             </>
           )}
         </div>
       </nav>
-      {showPlatform && (
-        <div className="border-t border-[color:var(--border)] bg-white/60">
-          <div className="mx-auto max-w-6xl px-6 h-11 flex items-center gap-1 overflow-x-auto text-xs">
-            {platformLinks.map((l) => {
-              const active = pathname === l.href || pathname?.startsWith(l.href + "/");
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={`px-3 py-1.5 rounded-full transition whitespace-nowrap ${active ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--primary)]"}`}
-                >
-                  {l.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
