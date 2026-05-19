@@ -36,15 +36,7 @@ export function SiteNav() {
             {configured && user ? (
               <UserMenu />
             ) : (
-              <>
-                <Link href="/signin" className="px-3 py-1.5 rounded-full whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--primary)] transition">Sign in</Link>
-                <Link
-                  href="/onboard"
-                  className="inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition whitespace-nowrap"
-                >
-                  Join
-                </Link>
-              </>
+              <Link href="/signin" className="px-3 py-1.5 rounded-full whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--primary)] transition">Sign in</Link>
             )}
           </div>
         </div>
