@@ -79,6 +79,38 @@ export default function Home() {
         ))}
       </section>
 
+      {/* Platform */}
+      <section className="mx-auto w-full max-w-6xl px-6 py-20">
+        <div className="text-center max-w-2xl mx-auto">
+          <p className="text-xs uppercase tracking-widest text-[color:var(--primary)]">A plataforma</p>
+          <h2 className="mt-3 font-serif text-3xl sm:text-4xl text-[color:var(--foreground)]">Tudo o que uma comunidade alumni precisa, num só sítio</h2>
+          <p className="mt-4 text-[color:var(--muted)]">Directório, eventos, mentoria, vagas, grupos, conversa e notícias. E a Luma por cima de tudo a fazer o trabalho que ninguém tem tempo de fazer.</p>
+        </div>
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { href: "/agent", t: "Luma", d: "Agente IA que faz introduções, encontra eventos e responde 24/7.", primary: true },
+            { href: "/directory", t: "Directory", d: "21.000+ alumni com perfis ricos, filtros por cidade e programa." },
+            { href: "/events", t: "Events", d: "Eventos por chapter, RSVP, capacidade em tempo real." },
+            { href: "/mentoring", t: "Mentoring", d: "Mentores Nova com disponibilidade visível e pedido directo." },
+            { href: "/jobs", t: "Jobs", d: "Vagas publicadas por alumni para alumni, com candidatura nativa." },
+            { href: "/forums", t: "Forums", d: "Conversa entre alumni por tema, chapter, programa." },
+            { href: "/groups", t: "Groups", d: "Chapters internacionais e grupos de interesse." },
+            { href: "/news", t: "News", d: "Spotlights, parcerias, notícias da escola e da comunidade." },
+          ].map((b) => (
+            <Link
+              key={b.href}
+              href={b.href}
+              className={`rounded-2xl border p-6 transition group ${b.primary ? "border-[color:var(--primary)] bg-[color:var(--primary)] text-white hover:bg-[color:var(--primary-700)]" : "border-[color:var(--border)] bg-white hover:border-[color:var(--primary)]"}`}
+            >
+              <div className={`text-xs uppercase tracking-widest ${b.primary ? "opacity-80" : "text-[color:var(--primary)]"}`}>{b.primary ? "AI" : "Module"}</div>
+              <div className={`mt-2 font-serif text-2xl ${b.primary ? "text-white" : "text-[color:var(--foreground)]"}`}>{b.t}</div>
+              <div className={`mt-2 text-sm ${b.primary ? "opacity-90" : "text-[color:var(--muted)]"}`}>{b.d}</div>
+              <div className={`mt-4 text-xs ${b.primary ? "opacity-80" : "text-[color:var(--primary)]"} group-hover:translate-x-0.5 transition`}>Abrir →</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* First event */}
       <section className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="rounded-3xl bg-[color:var(--primary)] text-[color:var(--on-primary)] p-10 sm:p-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 relative overflow-hidden">
