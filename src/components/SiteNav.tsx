@@ -23,7 +23,7 @@ export function SiteNav() {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
-      <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-end gap-3 group text-black shrink-0" aria-label={brand.name}>
           <NovaLogo size={20} showSignature={false} animate />
           <span className="hidden sm:inline-block w-px h-5 bg-[color:var(--border)] mb-1" />
@@ -31,7 +31,32 @@ export function SiteNav() {
             Alumni Club
           </span>
         </Link>
-        <div className="flex items-center gap-1 flex-1 overflow-x-auto justify-end text-sm">
+        <div className="flex items-center gap-2 text-sm">
+          {configured && user ? (
+            <UserMenu />
+          ) : (
+            <>
+              <Link href="/signin" className="px-3 py-1.5 rounded-full whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--primary)] transition">Sign in</Link>
+              <Link
+                href="/onboard"
+                className="inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition whitespace-nowrap"
+              >
+                Join
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+      <nav className="border-t border-[color:var(--border)]/60">
+        <div className="mx-auto max-w-6xl px-6 h-11 flex items-center gap-1 overflow-x-auto text-sm">
+          {configured && user && (
+            <Link
+              href="/dashboard"
+              className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${pathname === "/dashboard" ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}
+            >
+              Dashboard
+            </Link>
+          )}
           {platformLinks.map((l) => {
             const active = pathname === l.href || pathname?.startsWith(l.href + "/");
             return (
@@ -44,22 +69,6 @@ export function SiteNav() {
               </Link>
             );
           })}
-          {configured && user ? (
-            <>
-              <Link href="/dashboard" className={`px-3 py-1.5 rounded-full whitespace-nowrap transition ${pathname === "/dashboard" ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--foreground)] hover:text-[color:var(--primary)]"}`}>Dashboard</Link>
-              <UserMenu />
-            </>
-          ) : (
-            <>
-              <Link href="/signin" className="px-3 py-1.5 rounded-full whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--primary)] transition">Sign in</Link>
-              <Link
-                href="/onboard"
-                className="ml-1 inline-flex items-center rounded-full bg-[color:var(--primary)] px-4 py-1.5 text-sm font-medium text-[color:var(--on-primary)] hover:bg-[color:var(--primary-700)] transition whitespace-nowrap"
-              >
-                Join
-              </Link>
-            </>
-          )}
         </div>
       </nav>
     </header>
