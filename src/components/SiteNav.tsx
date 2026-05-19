@@ -20,7 +20,7 @@ const platformLinks = [
 export function SiteNav() {
   const { configured, user } = useAuth();
   const pathname = usePathname();
-  const showPlatform = platformLinks.some((l) => pathname?.startsWith(l.href)) || pathname === "/dashboard";
+  const showPlatform = true;
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
       <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
