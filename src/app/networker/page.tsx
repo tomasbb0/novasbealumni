@@ -228,7 +228,7 @@ export default function NetworkerPage() {
     if (!sessionIdRef.current) sessionIdRef.current = genId("session");
     const timer = window.setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
-      const forceLive = params.get("live") === "1" && CHAT_URL;
+      const forceLive = CHAT_URL && params.get("mock") !== "1";
       setUseMock(!forceLive);
       const exampleParam = params.get("example");
       if (exampleParam !== null) {
