@@ -1,13 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { brand } from "@/lib/brand";
 import { NovaLogo } from "./NovaLogo";
 import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/lib/auth";
 
+const platformLinks = [
+  { href: "/directory", label: "Directory" },
+  { href: "/events", label: "Events" },
+  { href: "/mentoring", label: "Mentoring" },
+  { href: "/jobs", label: "Jobs" },
+  { href: "/forums", label: "Forums" },
+  { href: "/groups", label: "Groups" },
+  { href: "/news", label: "News" },
+];
+
 export function SiteNav() {
   const { configured, user } = useAuth();
+  const pathname = usePathname();
+  const showPlatform = platformLinks.some((l) => pathname?.startsWith(l.href)) || pathname === "/dashboard";
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-[color:var(--border)]">
       <nav className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
@@ -26,7 +39,6 @@ export function SiteNav() {
           {configured && user ? (
             <>
               <Link href="/dashboard" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Dashboard</Link>
-              <Link href="/directory" className="hover:text-[color:var(--primary)] transition hidden sm:inline">Directory</Link>
               <UserMenu />
             </>
           ) : (
@@ -42,6 +54,24 @@ export function SiteNav() {
           )}
         </div>
       </nav>
+      {showPlatform && (
+        <div className="border-t border-[color:var(--border)] bg-white/60">
+          <div className="mx-auto max-w-6xl px-6 h-11 flex items-center gap-1 overflow-x-auto text-xs">
+            {platformLinks.map((l) => {
+              const active = pathname === l.href || pathname?.startsWith(l.href + "/");
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={`px-3 py-1.5 rounded-full transition whitespace-nowrap ${active ? "bg-[color:var(--primary)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--primary)]"}`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
