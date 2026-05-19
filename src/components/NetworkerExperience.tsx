@@ -557,6 +557,20 @@ export default function NetworkerExperience() {
             </div>
           </div>
         </form>
+
+        <div className="mt-4 flex items-center justify-center gap-4 rounded-2xl border border-[color:var(--border)] bg-white/70 px-4 py-3 text-xs text-[color:var(--muted)]">
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=https%3A%2F%2Fweb.whatsapp.com%2F"
+            alt="QR para web.whatsapp.com"
+            width={72}
+            height={72}
+            className="rounded-md"
+          />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[color:var(--foreground)] font-medium">Abrir WhatsApp Web</span>
+            <span>Aponta o telemóvel para o código e abre o web.whatsapp.com.</span>
+          </div>
+        </div>
       </div>
     </main>
   );
