@@ -20,6 +20,10 @@ type StreamEvent =
   | { type: "interrupted"; text?: string }
   | { type: "error"; text?: string };
 
+type ChatMessage =
+  | { role: "user"; id: string; text: string }
+  | { role: "luma"; id: string; narration: string; matches: MatchCard[]; running: boolean; error?: string };
+
 const CHAT_URL = process.env.NEXT_PUBLIC_AGENT_CHAT_URL ?? "";
 
 type MockScript = {
@@ -79,34 +83,35 @@ const fintechScript: MockScript = {
 };
 
 const mentorScript: MockScript = {
-  prompt: "Procuro um mentor para entrar em investment banking em Londres.",
+  prompt: "Procuro um mentor que tenha entrado em investment banking em Londres. Quero perceber como prepararam os processos.",
   events: [
-    { type: "narration", text: "Olá. Sou a Luma. Vou procurar alumni com carreira em IB em Londres. " },
-    { type: "narration", text: "Estou a dar prioridade a quem está actualmente em funções e tem histórico de mentorar candidatos Nova. " },
+    { type: "narration", text: "Olá. Sou a Luma. Estou a procurar mentores que tenham entrado em IB em Londres. " },
+    { type: "narration", text: "Foco em pessoas que fizeram o processo recentemente e que respondem a pedidos da rede. " },
     {
       type: "match",
       match: {
-        id: "mock-mentor-1",
-        name: "André Tavares",
-        role: "VP Investment Banking",
+        id: "mock-ib-1",
+        name: "Rui Marques",
+        role: "Associate",
         company: "Goldman Sachs",
         city: "Londres",
-        reason: "Alumni Nova MiF. Já mentorou 4 candidatos da rede nos últimos 18 meses. Conhece bem o processo de assessment center.",
-        intro: "Olá André. Tens aqui um candidato Nova SBE interessado em IB em Londres. Estaria à procura de 30 minutos para perceber timing, processo e o que estudar. Aceitas?",
+        reason: "Fez verão na Goldman, voltou full-time. Já mentorou 4 alumni Nova SBE para processos de IB em Londres.",
+        intro: "Olá Rui. Sou alumno Nova SBE e estou a preparar processos para IB em Londres. Tinhas 25 minutos para me partilhares como te organizaste?",
         confidence: 94,
       },
     },
+    { type: "narration", text: "Tenho ainda mais duas pessoas em coverage e M&A que podem ajudar. " },
     {
       type: "match",
       match: {
-        id: "mock-mentor-2",
+        id: "mock-ib-2",
         name: "Catarina Lopes",
-        role: "Associate, M&A",
+        role: "Analyst",
         company: "Morgan Stanley",
         city: "Londres",
-        reason: "Entrou há 2 anos. Mais próxima da experiência recente de candidatura e dá feedback técnico em modeling.",
-        intro: "Olá Catarina. Tenho um candidato Nova que quer entrar em IB e beneficiava da tua experiência recente. 20 minutos de chamada?",
-        confidence: 88,
+        reason: "Saída direta do mestrado Nova SBE para IB em Londres. Útil para o ponto de vista de quem acabou de passar pelo processo.",
+        intro: "Olá Catarina. Sou alumno Nova SBE e estou a candidatar-me a IB em Londres. Disponível para 20 minutos para me partilhares a experiência do processo?",
+        confidence: 89,
       },
     },
     { type: "done" },
@@ -114,34 +119,35 @@ const mentorScript: MockScript = {
 };
 
 const vcScript: MockScript = {
-  prompt: "Sou VC. Quero deal flow em SaaS ibérico nos próximos 6 meses.",
+  prompt: "Sou VC. Procuro deal flow em SaaS B2B ibérico. Quem na rede pode introduzir-me a fundadores no estágio seed?",
   events: [
-    { type: "narration", text: "Olá. Sou a Luma. Vou filtrar fundadores alumni em SaaS, com sede em Portugal ou Espanha. " },
-    { type: "narration", text: "Estou a dar prioridade a quem está em fase de captação ou cresceu nos últimos 12 meses. " },
+    { type: "narration", text: "Olá. Sou a Luma. Estou a interpretar o pedido como uma procura de deal flow ibérico em SaaS B2B seed. " },
+    { type: "narration", text: "A filtrar fundadores e operadores ligados a SaaS B2B com sede em Portugal ou Espanha. " },
     {
       type: "match",
       match: {
         id: "mock-vc-1",
-        name: "Diogo Sousa",
-        role: "Co-founder & CEO",
-        company: "Stack Health",
+        name: "André Tavares",
+        role: "CEO e fundador",
+        company: "Sequoia (SaaS B2B logística)",
         city: "Lisboa",
-        reason: "SaaS B2B em saúde digital. Cresceu 3x no último ano. Está a iniciar Series A no próximo trimestre.",
-        intro: "Olá Diogo. Tenho aqui um investidor com tese em SaaS ibérico. Faz sentido marcarmos uma chamada inicial de 30 min?",
+        reason: "Fundador SaaS B2B em fase seed, com rede forte de outros fundadores ibéricos. Pode introduzir 4 a 6 nomes.",
+        intro: "Olá André. Estou a mapear deal flow SaaS B2B ibérico em estágio seed. Tinhas 25 minutos para uma chamada e, se fizer sentido, intros para outros fundadores da tua rede?",
         confidence: 90,
       },
     },
+    { type: "narration", text: "Adicionei também um operador sénior com bom mapa do ecossistema. " },
     {
       type: "match",
       match: {
         id: "mock-vc-2",
-        name: "Inês Carvalho",
-        role: "Founder",
-        company: "Loopa",
-        city: "Madrid",
-        reason: "Building SaaS de operações para retalho. Pre-seed fechado, perto de Seed. Forte tracção em Espanha.",
-        intro: "Olá Inês. Tenho um VC interessado em SaaS ibérico que queria conhecer-te antes da próxima ronda. Faz sentido?",
-        confidence: 85,
+        name: "Helena Costa",
+        role: "VP Marketing",
+        company: "Talkdesk",
+        city: "Lisboa",
+        reason: "Operadora SaaS B2B com visibilidade sobre o ecossistema ibérico. Costuma indicar fundadores na fase seed.",
+        intro: "Olá Helena. Estou a procurar deal flow SaaS B2B ibérico no estágio seed. Disponível para 20 minutos e, se fizer sentido, intros aos fundadores que vês a destacar-se?",
+        confidence: 84,
       },
     },
     { type: "done" },
@@ -149,34 +155,34 @@ const vcScript: MockScript = {
 };
 
 const adviceScript: MockScript = {
-  prompt: "Estou a vender SaaS B2B em saúde. Quem na rede me pode aconselhar?",
+  prompt: "Quero aconselhamento para entrar em SaaS na área da saúde. Quem na rede tem essa experiência?",
   events: [
-    { type: "narration", text: "Olá. Sou a Luma. Vou procurar quem na rede vendeu SaaS B2B em saúde ou está perto desse mercado. " },
-    { type: "narration", text: "Filtrei por quem teve papéis comerciais ou de produto em healthtech ou clínicas. " },
+    { type: "narration", text: "Olá. Sou a Luma. A entender o pedido como aconselhamento para SaaS em saúde. " },
+    { type: "narration", text: "A procurar alumni com experiência em healthtech, RWD ou software clínico. " },
     {
       type: "match",
       match: {
-        id: "mock-advice-1",
-        name: "Mariana Pereira",
-        role: "VP Sales",
+        id: "mock-health-1",
+        name: "Sofia Antunes",
+        role: "VP Product",
         company: "Doctolib",
-        city: "Paris",
-        reason: "Vendeu SaaS clínico durante 4 anos. Tem playbook para vender a hospitais privados e grupos clínicos.",
-        intro: "Olá Mariana. Tenho um fundador alumni Nova a vender SaaS para saúde e beneficiava muito da tua experiência. 30 min?",
-        confidence: 91,
+        city: "Berlim",
+        reason: "Lidera produto numa healthtech europeia. Pode partilhar como pensar GTM em hospitais, ciclo de venda e regulação.",
+        intro: "Olá Sofia. Sou alumno Nova SBE a explorar SaaS em saúde. Tinhas 25 minutos para me ajudares a pensar GTM e ciclo de venda em hospitais?",
+        confidence: 88,
       },
     },
     {
       type: "match",
       match: {
-        id: "mock-advice-2",
-        name: "Catarina Lopes",
-        role: "Operating Partner",
-        company: "Indico Capital",
-        city: "Lisboa",
-        reason: "Apoia portfolio em GTM, com 3 healthtechs activas. Boa para feedback de pricing e ICP.",
-        intro: "Olá Catarina. Tens aqui um fundador alumni Nova a vender SaaS em saúde e queria ouvir-te 20 min sobre ICP e pricing.",
-        confidence: 84,
+        id: "mock-health-2",
+        name: "Pedro Almeida",
+        role: "Founder",
+        company: "Sword Health (early team)",
+        city: "Porto",
+        reason: "Esteve no early team de uma healthtech ibérica que escalou globalmente. Útil para perceber product-market fit em healthtech.",
+        intro: "Olá Pedro. Sou alumno Nova SBE a explorar SaaS em saúde. Disponível para 20 minutos para partilhares como pensam product-market fit em healthtech?",
+        confidence: 85,
       },
     },
     { type: "done" },
@@ -192,34 +198,34 @@ const examples: { label: string; script: MockScript }[] = [
 
 function pickMockScript(query: string): MockScript {
   const q = query.toLowerCase();
-  if (q.includes("ib") || q.includes("invest") && q.includes("banking") || q.includes("mentor")) return mentorScript;
+  if (q.includes("ib") || (q.includes("invest") && q.includes("banking")) || q.includes("mentor")) return mentorScript;
   if (q.includes("vc") || q.includes("deal flow") || q.includes("investidor")) return vcScript;
   if (q.includes("saúde") || q.includes("saude") || q.includes("health")) return adviceScript;
   return fintechScript;
 }
 
+function genId(prefix: string) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return `${prefix}-${crypto.randomUUID()}`;
+  return `${prefix}-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+}
+
 export default function NetworkerPage() {
   const [query, setQuery] = useState("");
-  const [narration, setNarration] = useState("");
-  const [matches, setMatches] = useState<MatchCard[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [email, setEmail] = useState("");
-  const [useMock, setUseMock] = useState(false);
+  const [useMock, setUseMock] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const controllerRef = useRef<AbortController | null>(null);
   const sessionIdRef = useRef<string>("");
   const timersRef = useRef<number[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const activeLumaIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!sessionIdRef.current) {
-      sessionIdRef.current =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `session-${Math.random().toString(36).slice(2)}`;
-    }
+    if (!sessionIdRef.current) sessionIdRef.current = genId("session");
     const timer = window.setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       const forceLive = params.get("live") === "1" && CHAT_URL;
@@ -232,119 +238,109 @@ export default function NetworkerPage() {
         }
       }
     }, 0);
-
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [narration, matches, isRunning]);
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, isRunning]);
 
-  function getSessionId() {
-    return sessionIdRef.current;
-  }
-
-  function resetRun() {
-    timersRef.current.forEach((timer) => window.clearTimeout(timer));
+  function resetTimers() {
+    timersRef.current.forEach((t) => window.clearTimeout(t));
     timersRef.current = [];
     controllerRef.current?.abort();
     controllerRef.current = null;
   }
 
+  function updateLuma(updater: (msg: Extract<ChatMessage, { role: "luma" }>) => Extract<ChatMessage, { role: "luma" }>) {
+    const id = activeLumaIdRef.current;
+    if (!id) return;
+    setMessages((current) =>
+      current.map((m) => (m.role === "luma" && m.id === id ? updater(m) : m))
+    );
+  }
+
   function applyEvent(event: StreamEvent) {
     if (event.type === "narration") {
-      setNarration((current) => `${current}${event.text}`);
+      updateLuma((m) => ({ ...m, narration: m.narration + event.text }));
       return;
     }
-
     if (event.type === "match") {
-      setMatches((current) => [...current, event.match]);
+      updateLuma((m) => ({ ...m, matches: [...m.matches, event.match] }));
       return;
     }
-
     if (event.type === "interrupted") {
-      setNarration((current) => `${current}\n\n${event.text ?? "Diz-me o que mudar."}`);
+      updateLuma((m) => ({ ...m, narration: `${m.narration}\n\n${event.text ?? "Diz-me o que mudar."}`, running: false }));
       setIsRunning(false);
       return;
     }
-
     if (event.type === "error") {
-      setError(event.text ?? "A agente teve um erro. Tenta outra vez.");
+      updateLuma((m) => ({ ...m, error: event.text ?? "A agente teve um erro.", running: false }));
       setIsRunning(false);
       return;
     }
-
     if (event.type === "done") {
+      updateLuma((m) => ({ ...m, running: false }));
       setIsRunning(false);
     }
   }
 
-  function runMockStream(text: string) {
-    const script = pickMockScript(text);
+  function startTurn(userText: string): string {
+    resetTimers();
+    const userMsg: ChatMessage = { role: "user", id: genId("user"), text: userText };
+    const lumaId = genId("luma");
+    const lumaMsg: ChatMessage = { role: "luma", id: lumaId, narration: "", matches: [], running: true };
+    activeLumaIdRef.current = lumaId;
+    setMessages((current) => [...current, userMsg, lumaMsg]);
+    setIsRunning(true);
+    return lumaId;
+  }
+
+  function scheduleScript(script: MockScript) {
     script.events.forEach((event, index) => {
-      const timer = window.setTimeout(() => applyEvent(event), 600 * (index + 1));
+      const timer = window.setTimeout(() => applyEvent(event), 500 * (index + 1));
       timersRef.current.push(timer);
     });
   }
 
   function runExample(example: MockScript) {
     if (isRunning) return;
-    resetRun();
-    setQuery(example.prompt);
-    setNarration("");
-    setMatches([]);
-    setError(null);
-    setCopiedId(null);
-    setIsRunning(true);
-    example.events.forEach((event, index) => {
-      const timer = window.setTimeout(() => applyEvent(event), 600 * (index + 1));
-      timersRef.current.push(timer);
-    });
+    setQuery("");
+    startTurn(example.prompt);
+    scheduleScript(example);
   }
 
   async function runLiveStream(text: string) {
     const controller = new AbortController();
     controllerRef.current = controller;
-
     const response = await fetch(CHAT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query: text,
-        sessionId: getSessionId(),
+        sessionId: sessionIdRef.current,
         emailMe: emailEnabled ? { email: email.trim() } : undefined,
       }),
       signal: controller.signal,
     });
-
-    if (!response.ok || !response.body) {
-      throw new Error(`A agente respondeu com estado ${response.status}.`);
-    }
-
+    if (!response.ok || !response.body) throw new Error(`A agente respondeu com estado ${response.status}.`);
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const chunks = buffer.split("\n\n");
       buffer = chunks.pop() ?? "";
-
       chunks.forEach((chunk) => {
-        const line = chunk
-          .split("\n")
-          .find((part) => part.startsWith("data:"));
-
+        const line = chunk.split("\n").find((p) => p.startsWith("data:"));
         if (!line) return;
-
         try {
           applyEvent(JSON.parse(line.slice(5).trim()) as StreamEvent);
         } catch {
-          setError("Recebi uma resposta inválida da agente.");
+          updateLuma((m) => ({ ...m, error: "Resposta inválida da agente.", running: false }));
         }
       });
     }
@@ -354,44 +350,31 @@ export default function NetworkerPage() {
     event.preventDefault();
     const text = query.trim();
     if (!text || isRunning) return;
-
-    resetRun();
-    setNarration("");
-    setMatches([]);
-    setError(null);
-    setCopiedId(null);
-    setIsRunning(true);
-
+    setQuery("");
+    startTurn(text);
     if (useMock) {
-      runMockStream(text);
+      scheduleScript(pickMockScript(text));
       return;
     }
-
     try {
       await runLiveStream(text);
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
-      setError(caught instanceof Error ? caught.message : "A agente teve um erro.");
+      updateLuma((m) => ({ ...m, error: caught instanceof Error ? caught.message : "A agente teve um erro.", running: false }));
       setIsRunning(false);
     }
   }
 
   async function interrupt() {
     if (!isRunning) return;
-
-    timersRef.current.forEach((timer) => window.clearTimeout(timer));
-    timersRef.current = [];
-    controllerRef.current?.abort();
+    resetTimers();
+    updateLuma((m) => ({ ...m, narration: `${m.narration}\n\nDiz-me o que mudar.`, running: false }));
     setIsRunning(false);
-    setNarration((current) => `${current}\n\nDiz-me o que mudar.`);
-
     if (!useMock) {
       try {
-        await fetch(`${CHAT_URL.replace(/\/$/, "")}/${getSessionId()}/interrupt`, {
-          method: "POST",
-        });
+        await fetch(`${CHAT_URL.replace(/\/$/, "")}/${sessionIdRef.current}/interrupt`, { method: "POST" });
       } catch {
-        setError("Interrompi no ecrã, mas o servidor pode continuar por uns segundos.");
+        /* server may keep running briefly; ignore */
       }
     }
   }
@@ -401,179 +384,176 @@ export default function NetworkerPage() {
     setCopiedId(match.id ?? match.name);
   }
 
+  const isEmpty = messages.length === 0;
+
   return (
     <main className="min-h-[calc(100vh-8rem)] bg-[radial-gradient(ellipse_at_top_left,_rgba(3,63,133,0.11),_transparent_50%)]">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-16 lg:grid-cols-[0.92fr_1.08fr] lg:py-20">
-        <section>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6 sm:py-14">
+        <header className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#033F85]/20 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#033F85]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#033F85]" />
             Luma. A agente IA da rede Nova SBE Alumni
           </div>
-          <h1 className="mt-6 font-serif text-5xl leading-tight text-[color:var(--foreground)] sm:text-6xl">
+          <h1 className="mt-4 font-serif text-4xl leading-tight text-[color:var(--foreground)] sm:text-5xl">
             Pede uma intro sem perder uma tarde.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-[color:var(--muted)]">
-            Diz à Luma o que precisas. Ela procura na rede Nova SBE Alumni, explica o raciocínio e prepara as mensagens prontas a copiar.
+          <p className="mt-3 text-base text-[color:var(--muted)]">
+            Demo com 5 perfis de exemplo. Diz à Luma o que precisas ou clica num cenário.
           </p>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-[color:var(--muted)]">
-            Demo. Catálogo limitado a 5 perfis de exemplo, para mostrar como a Luma funciona em produção.
-          </p>
+        </header>
 
-          <div className="mt-6">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#033F85]">Experimenta um cenário</div>
-            <div className="flex flex-wrap gap-2">
-              {examples.map((example) => (
-                <button
-                  key={example.label}
-                  type="button"
-                  onClick={() => runExample(example.script)}
-                  disabled={isRunning}
-                  className="rounded-full border border-[#033F85]/25 bg-white px-4 py-2 text-sm font-medium text-[#033F85] transition hover:border-[#033F85] hover:bg-[#033F85]/5 disabled:opacity-50"
-                >
-                  {example.label}
-                </button>
-              ))}
+        <div
+          ref={threadRef}
+          className="flex max-h-[60vh] min-h-[24rem] flex-col gap-4 overflow-y-auto rounded-3xl border border-[color:var(--border)] bg-white p-4 shadow-[0_24px_70px_-45px_rgba(3,63,133,0.55)] sm:p-6"
+        >
+          {isEmpty && (
+            <div className="m-auto max-w-md text-center text-[color:var(--muted)]">
+              <p className="font-serif text-2xl text-[#033F85]">Olá. Sou a Luma.</p>
+              <p className="mt-3 text-sm">
+                Diz-me o que precisas, ou começa por um destes cenários:
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {examples.map((example, idx) => (
+                  <button
+                    key={example.label}
+                    type="button"
+                    onClick={() => runExample(example.script)}
+                    disabled={isRunning}
+                    className="rounded-full border border-[#033F85]/25 bg-white px-3 py-1.5 text-xs font-medium text-[#033F85] transition hover:border-[#033F85] hover:bg-[#033F85]/5 disabled:opacity-50"
+                  >
+                    {idx + 1}. {example.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <form onSubmit={submit} className="mt-6 rounded-3xl border border-[color:var(--border)] bg-white p-5 shadow-[0_24px_70px_-45px_rgba(3,63,133,0.75)]">
-            <label className="sr-only" htmlFor="networker-query">
-              Pedido de networking
-            </label>
-            <textarea
-              id="networker-query"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Ou escreve aqui o que precisas. Ex: Estou a entrar em consultoria, quem na rede me pode dar conselho?"
-              className="min-h-36 w-full resize-none rounded-2xl border border-[color:var(--border)] bg-white px-4 py-4 leading-relaxed outline-none transition focus:border-[#033F85] focus:ring-4 focus:ring-[#033F85]/10"
-            />
+          {messages.map((msg) => {
+            if (msg.role === "user") {
+              return (
+                <div key={msg.id} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl rounded-br-md bg-[#033F85] px-4 py-3 text-white shadow-sm">
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                  </div>
+                </div>
+              );
+            }
 
-            <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-[#033F85]/5 p-4">
-              <label className="flex cursor-pointer items-start gap-3 text-sm text-[color:var(--foreground)]">
-                <input
-                  type="checkbox"
-                  checked={emailEnabled}
-                  onChange={(event) => setEmailEnabled(event.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-[color:var(--border)] accent-[#033F85]"
-                />
-                <span>Posso fechar o portátil? Manda-me por email</span>
-              </label>
+            return (
+              <div key={msg.id} className="flex justify-start">
+                <div className="w-full max-w-[95%] space-y-4">
+                  <div className="rounded-2xl rounded-bl-md border border-[#033F85]/15 bg-[color:var(--primary-50)]/30 px-4 py-3 leading-relaxed text-[color:var(--foreground)] shadow-sm">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#033F85]">
+                      Luma
+                    </div>
+                    <p className="whitespace-pre-wrap">{msg.narration || (msg.running ? "A pensar…" : "")}</p>
+                    {msg.running && (
+                      <span className="mt-2 inline-block h-2 w-2 animate-pulse rounded-full bg-[#033F85]" />
+                    )}
+                    {msg.error && (
+                      <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                        {msg.error}
+                      </p>
+                    )}
+                  </div>
 
+                  {msg.matches.map((match) => (
+                    <article key={match.id ?? match.name} className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-sm sm:p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-serif text-xl text-[color:var(--foreground)] sm:text-2xl">
+                            {match.name}
+                          </h3>
+                          <p className="mt-1 text-sm text-[color:var(--muted)]">
+                            {match.role}, {match.company}{match.city ? `, ${match.city}` : ""}
+                          </p>
+                        </div>
+                        {match.confidence && (
+                          <span className="rounded-full bg-[#033F85]/10 px-3 py-1 text-xs font-semibold text-[#033F85]">
+                            {match.confidence}% fit
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 leading-relaxed text-[color:var(--foreground)]">{match.reason}</p>
+                      <div className="mt-3 rounded-xl border border-[#033F85]/10 bg-[#033F85]/5 p-3 sm:p-4">
+                        <div className="text-xs font-semibold uppercase tracking-widest text-[#033F85]">
+                          Mensagem sugerida
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap leading-relaxed text-[color:var(--foreground)]">
+                          {match.intro}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void copyIntro(match)}
+                        className="mt-3 rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold text-[#033F85] transition hover:border-[#033F85]"
+                      >
+                        {copiedId === (match.id ?? match.name) ? "Copiado" : "Copiar mensagem"}
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <form onSubmit={submit} className="rounded-3xl border border-[color:var(--border)] bg-white p-4 shadow-[0_24px_70px_-45px_rgba(3,63,133,0.55)] sm:p-5">
+          <label className="sr-only" htmlFor="networker-query">
+            Pedido de networking
+          </label>
+          <textarea
+            id="networker-query"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
+            placeholder="Diz à Luma o que precisas. Ex: Quero uma intro a um fundador de SaaS B2B em Berlim."
+            className="min-h-20 w-full resize-none rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 leading-relaxed outline-none transition focus:border-[#033F85] focus:ring-4 focus:ring-[#033F85]/10"
+          />
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-[color:var(--muted)]">
+              <input
+                type="checkbox"
+                checked={emailEnabled}
+                onChange={(event) => setEmailEnabled(event.target.checked)}
+                className="h-4 w-4 rounded border-[color:var(--border)] accent-[#033F85]"
+              />
+              <span>Manda por email</span>
               {emailEnabled && (
                 <input
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="O teu email"
-                  className="rounded-full border border-[color:var(--border)] px-4 py-3 outline-none transition focus:border-[#033F85]"
+                  className="ml-2 rounded-full border border-[color:var(--border)] px-3 py-1.5 text-sm outline-none focus:border-[#033F85]"
                 />
               )}
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                disabled={isRunning || !query.trim() || (emailEnabled && !email.trim())}
-                className="rounded-full bg-[#033F85] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#022f63] disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Pedir à Luma
-              </button>
-
+            </label>
+            <div className="flex items-center gap-2">
               {isRunning && (
                 <button
                   type="button"
                   onClick={interrupt}
-                  className="rounded-full border border-[#033F85]/25 bg-white px-5 py-3 text-sm font-semibold text-[#033F85] transition hover:border-[#033F85]"
+                  className="rounded-full border border-[#033F85]/25 bg-white px-4 py-2 text-sm font-semibold text-[#033F85] transition hover:border-[#033F85]"
                 >
                   Interromper
                 </button>
               )}
+              <button
+                type="submit"
+                disabled={isRunning || !query.trim() || (emailEnabled && !email.trim())}
+                className="rounded-full bg-[#033F85] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#022f63] disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Pedir à Luma
+              </button>
             </div>
-          </form>
-        </section>
-
-        <section className="rounded-3xl border border-[color:var(--border)] bg-white p-5 shadow-[0_24px_70px_-45px_rgba(0,0,0,0.35)] sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-[#033F85]">
-                Luma
-              </div>
-              <h2 className="mt-1 font-serif text-3xl text-[color:var(--foreground)]">
-                Narrativa e matches
-              </h2>
-            </div>
-            {isRunning && (
-              <div className="rounded-full bg-[#033F85]/10 px-3 py-1 text-xs font-semibold text-[#033F85]">
-                A escrever
-              </div>
-            )}
           </div>
-
-          <div className="min-h-[34rem] space-y-5 rounded-2xl bg-[color:var(--primary-50)]/25 p-4">
-            {narration || isRunning ? (
-              <div className="rounded-2xl border border-[#033F85]/15 bg-white p-5 leading-relaxed text-[color:var(--foreground)] shadow-sm">
-                <p className="whitespace-pre-wrap">{narration}</p>
-                {isRunning && <span className="mt-3 inline-block h-2 w-2 animate-pulse rounded-full bg-[#033F85]" />}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-[#033F85]/30 bg-white p-6 leading-relaxed text-[color:var(--foreground)]">
-                <p className="font-semibold text-[#033F85]">Olá. Sou a Luma.</p>
-                <p className="mt-2 text-[color:var(--muted)]">
-                  Sou a agente IA da rede Nova SBE Alumni. Diz-me o que precisas, ou clica num dos cenários ao lado, e procuro entre os alumni quem te pode ajudar. Mostro o raciocínio em directo e preparo a mensagem que podes copiar.
-                </p>
-              </div>
-            )}
-
-            {matches.map((match) => (
-              <article key={match.id ?? match.name} className="rounded-2xl border border-[color:var(--border)] bg-white p-5 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-serif text-2xl text-[color:var(--foreground)]">
-                      {match.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-[color:var(--muted)]">
-                      {match.role}, {match.company}{match.city ? `, ${match.city}` : ""}
-                    </p>
-                  </div>
-                  {match.confidence && (
-                    <span className="rounded-full bg-[#033F85]/10 px-3 py-1 text-xs font-semibold text-[#033F85]">
-                      {match.confidence}% fit
-                    </span>
-                  )}
-                </div>
-
-                <p className="mt-4 leading-relaxed text-[color:var(--foreground)]">
-                  {match.reason}
-                </p>
-
-                <div className="mt-4 rounded-xl border border-[#033F85]/10 bg-[#033F85]/5 p-4">
-                  <div className="text-xs font-semibold uppercase tracking-widest text-[#033F85]">
-                    Mensagem sugerida
-                  </div>
-                  <p className="mt-2 whitespace-pre-wrap leading-relaxed text-[color:var(--foreground)]">
-                    {match.intro}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => void copyIntro(match)}
-                  className="mt-4 rounded-full border border-[color:var(--border)] px-4 py-2 text-sm font-semibold text-[#033F85] transition hover:border-[#033F85]"
-                >
-                  {copiedId === (match.id ?? match.name) ? "Copiado" : "Copiar mensagem"}
-                </button>
-              </article>
-            ))}
-
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            <div ref={scrollRef} />
-          </div>
-        </section>
+        </form>
       </div>
     </main>
   );
