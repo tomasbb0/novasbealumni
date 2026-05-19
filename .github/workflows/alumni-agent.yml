@@ -21,8 +21,11 @@ name: 24/7 Alumni Networker Agent
 # message (no scary red X every 6 hours).
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
+  # Cron disabled 2026-05-19: primary agent now runs on Hetzner
+  # (bot-host-1, systemd alumni-agent.timer every 15 min). Re-enable
+  # by uncommenting the schedule block if the Hetzner box ever dies.
+  # schedule:
+  #   - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       effort:
