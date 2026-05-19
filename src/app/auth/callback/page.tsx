@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { getProfile, isProfileComplete } from "@/lib/profile";
+import { getProfile, isProfileComplete, upsertProfile } from "@/lib/profile";
 
 function CallbackInner() {
   const { ready, user } = useAuth();
@@ -21,7 +21,21 @@ function CallbackInner() {
     }
     (async () => {
       try {
-        const profile = await getProfile(user.id);
+        let profile = await getProfile(user.id);
+        if (!profile) {
+          const meta = (user.user_metadata || {}) as Record<string, unknown>;
+          const seed = {
+            id: user.id,
+            full_name: (meta.full_name as string) || (meta.name as string) || null,
+            avatar_url: (meta.avatar_url as string) || (meta.picture as string) || null,
+          };
+          try {
+            await upsertProfile(seed);
+            profile = await getProfile(user.id);
+          } catch {
+            // RLS or race; onboarding will retry.
+          }
+        }
         const next = params.get("next") || (isProfileComplete(profile) ? "/dashboard" : "/onboarding");
         router.replace(next);
       } catch {
