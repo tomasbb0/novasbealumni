@@ -81,12 +81,19 @@ PROMPT_BODY=$(cat .github/agent-prompts/networker.md)
 # --allow-all-tools is required for non-interactive mode.
 # --allow-all-paths because we operate on data/ which is inside the repo anyway.
 # We deliberately do NOT pass --allow-all-urls; the agent must not call out.
+# --effort is only supported by reasoning-capable models (sonnet, opus, gpt-5*).
+# Haiku rejects --effort with an error, so we skip it for haiku models.
+EFFORT_ARGS=()
+case "$MODEL_ID" in
+  *haiku*) ;;  # haiku doesn't support --effort
+  *) EFFORT_ARGS=(--effort "$EFFORT") ;;
+esac
+
 MODEL_ID="$MODEL_ID" copilot \
   --model "$MODEL_ID" \
-  --effort "$EFFORT" \
+  "${EFFORT_ARGS[@]}" \
   --allow-all-tools \
   --allow-all-paths \
-  --no-banner \
   -p "$PROMPT_BODY"
 
 log "Validating data/proposed-connections.json..."
