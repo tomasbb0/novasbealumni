@@ -13,6 +13,7 @@ const platformLinks = [
   { href: "/events", label: "Events" },
   { href: "/mentoring", label: "Mentoring" },
   { href: "/jobs", label: "Jobs" },
+  { href: "/careers", label: "Careers" },
   { href: "/forums", label: "Forums" },
   { href: "/groups", label: "Groups" },
   { href: "/news", label: "News" },
