@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[88376,["/_next/static/chunks/0z-xvt069.u~0.js","/_next/static/chunks/0wlc.2fugn.q1.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/0_64q5fqlpqmj.js"],"TallyEmbed"]
+3:I[97367,["/_next/static/chunks/0z-xvt069.u~0.js","/_next/static/chunks/0wlc.2fugn.q1.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-6 py-20","children":[["$","div",null,{"className":"text-xs uppercase tracking-widest text-[color:var(--primary)]","children":"2 minutes, no signup"}],["$","h1",null,{"className":"mt-3 text-4xl sm:text-5xl font-semibold tracking-tight","children":"What should this community actually be?"}],["$","p",null,{"className":"mt-4 text-[color:var(--muted)]","children":"Your answers shape the first 6 months: format, frequency, who we prioritise, what kind of intros we make."}],["$","div",null,{"className":"mt-10","children":["$","$L2",null,{"formId":"KYPq7D","title":"Nova SBE Alumni Club survey","minHeight":720}]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/0_64q5fqlpqmj.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"-yBqZ-tM8YGsC2XKdDObB"}
+5:null
