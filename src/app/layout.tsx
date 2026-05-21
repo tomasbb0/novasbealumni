@@ -45,7 +45,11 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${openSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col relative">
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(3,63,133,0.10),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(84,28,101,0.08),_transparent_50%)]"
+        />
         <AuthProvider>
           <DemoBanner />
           <SiteNav />
