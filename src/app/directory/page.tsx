@@ -178,9 +178,11 @@ function Row({ label, value, multiline }: { label: string; value?: string | numb
 }
 
 function Avatar({ name, src, size = 40 }: { name?: string | null; src?: string | null; size?: number }) {
-  if (src) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => { setBroken(false); }, [src]);
+  if (src && !broken) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt="" className="rounded-full object-cover" style={{ width: size, height: size }} />;
+    return <img src={src} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="rounded-full object-cover" style={{ width: size, height: size }} />;
   }
   return (
     <div className="rounded-full bg-[color:var(--primary-50)] flex items-center justify-center text-[color:var(--primary)] font-medium" style={{ width: size, height: size, fontSize: size * 0.4 }}>
