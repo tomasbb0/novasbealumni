@@ -14,7 +14,18 @@ export type Profile = {
   avatar_url: string | null;
   offering: string | null;
   seeking: string | null;
+  rich_profile: RichProfile | null;
   updated_at: string | null;
+};
+
+export type RichProfile = {
+  about?: string | null;
+  educations: { school: string | null; degree: string | null; field: string | null; start: number | null; end: number | null; description: string | null; logo?: unknown }[];
+  experiences: { company: string | null; role: string | null; location: string | null; start: number | null; end: number | null; current: boolean; description: string | null; logo?: unknown }[];
+  skills: { name: string | null; endorsements?: number | null }[];
+  languages: { name: string | null; proficiency?: string | null }[];
+  certifications: { name: string | null; issuer: string | null; year: number | null }[];
+  honors?: { title: string | null; issuer: string | null; year: number | null }[];
 };
 
 export async function getProfile(userId: string): Promise<Profile | null> {

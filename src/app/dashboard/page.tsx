@@ -137,7 +137,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/onboarding" className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--primary)] text-[color:var(--primary)] px-3 py-1.5 text-xs font-medium hover:bg-[color:var(--primary)] hover:text-white transition">
-            Refazer onboarding
+            Your Profile
           </Link>
           <button onClick={signOut} className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Sign out</button>
         </div>
@@ -146,7 +146,7 @@ export default function DashboardPage() {
       <LumaCard className="mt-8" />
 
       <section className="mt-10">
-        <h2 className="font-serif text-xl text-[color:var(--foreground)] mb-4">A tua plataforma</h2>
+        <h2 className="font-serif text-xl text-[color:var(--foreground)] mb-4">Your platform</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { href: "/directory", t: "Directory", d: "21k+ alumni, filtros por cidade e programa." },
