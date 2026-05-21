@@ -136,7 +136,9 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/onboarding" className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Edit profile</Link>
+          <Link href="/onboarding" className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--primary)] text-[color:var(--primary)] px-3 py-1.5 text-xs font-medium hover:bg-[color:var(--primary)] hover:text-white transition">
+            Refazer onboarding
+          </Link>
           <button onClick={signOut} className="text-sm text-[color:var(--muted)] hover:text-[color:var(--primary)]">Sign out</button>
         </div>
       </header>

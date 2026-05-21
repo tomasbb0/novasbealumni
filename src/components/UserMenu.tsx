@@ -18,6 +18,7 @@ export function UserMenu() {
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState<Pick<Profile, "full_name" | "avatar_url"> | null>(null);
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -35,6 +36,10 @@ export function UserMenu() {
       cancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [profile?.avatar_url, user?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -76,9 +81,15 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        {avatar ? (
+        {avatar && !avatarBroken ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatar} alt="" className="w-7 h-7 rounded-full object-cover" />
+          <img
+            src={avatar}
+            alt=""
+            className="w-7 h-7 rounded-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setAvatarBroken(true)}
+          />
         ) : (
           <span className="w-7 h-7 rounded-full bg-[color:var(--primary)] text-[color:var(--on-primary)] text-xs font-medium grid place-items-center">
             {initialsOf(name, user.email)}
