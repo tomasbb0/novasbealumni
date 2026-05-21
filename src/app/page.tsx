@@ -8,7 +8,7 @@ export default function Home() {
     <div className="flex flex-col">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-[color:var(--border)]">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(84,28,101,0.10),_transparent_55%)]" />
+        <div className="fixed top-14 inset-x-0 bottom-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_rgba(84,28,101,0.10),_transparent_55%)]" />
         {/* Giant Nova ring: positioned so its centre is past the bottom-right corner of the
             hero, so only the top-left quarter bleeds in. Same circle as the small one, just
             inline so we can tune stroke thickness. */}
