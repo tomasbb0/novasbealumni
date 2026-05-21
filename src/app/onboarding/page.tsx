@@ -61,7 +61,18 @@ export default function OnboardingPage() {
         seeking: p?.seeking || "",
       });
       // If profile already exists with linkedin_url, skip detection and go straight to form
-      if (p?.linkedin_url) setStep("form");
+      if (p?.linkedin_url) {
+        setStep("form");
+        // Also fetch fresh rich data (dryRun, no DB write) so the preview shows
+        fetch(`${(process.env.NEXT_PUBLIC_AGENT_CHAT_URL || "").replace(/\/chat$/, "")}/enrich-profile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ linkedinUrl: p.linkedin_url, dryRun: true }),
+        })
+          .then((r) => r.json())
+          .then((j) => { if (j.rich) setRich(j.rich as Rich); })
+          .catch(() => {});
+      }
       setLoading(false);
     })();
   }, [ready, configured, user, router]);
