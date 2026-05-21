@@ -32,12 +32,20 @@ function CallbackInner() {
       let session = (await supabase.auth.getSession()).data.session;
 
       if (!session && code) {
+        // Implicit flow puts the token in the URL hash; detectSessionInUrl handles it.
+        // PKCE fallback for any lingering links.
         const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
         if (error) {
-          setMsg(`Sign-in failed: ${error.message}. Tenta de novo a partir de /signin (mesmo browser, sem modo anónimo).`);
+          setMsg(`Sign-in failed: ${error.message}. Volta a /signin e tenta outra vez no mesmo browser.`);
           return;
         }
         session = data.session;
+      }
+
+      // Last chance: wait briefly for onAuthStateChange after hash parsing.
+      if (!session) {
+        await new Promise((r) => setTimeout(r, 800));
+        session = (await supabase.auth.getSession()).data.session;
       }
 
       if (!session) {
